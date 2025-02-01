@@ -1,0 +1,34 @@
+{
+  "name": "react-native-node-api-modules-root",
+  "description": "Node-API Modules for React Native",
+  "type": "module",
+  "private": true,
+  "workspaces": [
+    "packages/react-native-node-api-modules"
+  ],
+  "homepage": "https://github.com/callstackincubator/react-native-node-api-modules#readme",
+  "scripts": {
+    "build": "tsc --build"
+  },
+  "author": {
+    "name": "Callstack",
+    "url": "https://github.com/callstackincubator"
+  },
+  "contributors": [
+    {
+      "name": "Kræn Hansen",
+      "url": "https://github.com/kraenhansen"
+    }
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "@eslint/js": "^9.19.0",
+    "@tsconfig/node22": "^22.0.0",
+    "@tsconfig/react-native": "3.0.5",
+    "@types/node": "^22.13.0",
+    "eslint": "^9.19.0",
+    "react-native": "0.77.0",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.22.0"
+  }
+}

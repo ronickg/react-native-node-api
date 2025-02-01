@@ -1,0 +1,6 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./packages/react-native-node-api-modules/tsconfig.json" }
+  ]
+}

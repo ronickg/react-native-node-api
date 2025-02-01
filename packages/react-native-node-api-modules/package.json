@@ -1,0 +1,53 @@
+{
+  "name": "react-native-node-api-modules",
+  "version": "0.1.0",
+  "description": "Node-API Modules for React Native",
+  "homepage": "https://github.com/callstackincubator/react-native-node-api-modules#readme",
+  "main": "dist/index.js",
+  "type": "commonjs",
+  "bin": {
+    "react-native-node-api-modules": "./bin/react-native-node-api-modules.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./metro-config": {
+      "types": "./dist/metro-config/index.d.ts",
+      "default": "./dist/metro-config/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc --build"
+  },
+  "keywords": [
+    "react-native",
+    "node-api",
+    "napi",
+    "node-api",
+    "node-addon-api",
+    "native",
+    "addon",
+    "module",
+    "c",
+    "c++",
+    "bindings",
+    "buildtools",
+    "cmake"
+  ],
+  "author": {
+    "name": "Callstack",
+    "url": "https://github.com/callstackincubator"
+  },
+  "contributors": [
+    {
+      "name": "Kræn Hansen",
+      "url": "https://github.com/kraenhansen"
+    }
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "metro-config": "0.81.1"
+  }
+}
