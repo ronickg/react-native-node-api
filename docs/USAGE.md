@@ -1,4 +1,4 @@
-# How to write and consume a React Native Node-API Module
+# Usage: How to write and consume a React Native Node-API Module
 
 The purpose of this document is to explain how Node-API modules are supported all the way from an app loading a library package to the library's native code returning a JavaScript value to from a function call.
 
@@ -18,7 +18,7 @@ The reason for the latter is a current limitation of the React Native Community 
 > [!WARNING]
 >  It's important to match the exact version of the `react-native-node-api-modules` declared as peer dependency by `calculator-lib`.
 
-For the app to resolve the Node-API dynamic library files, the app developer must update their Metro config to use a `requireRequest` function exported from `react-native-node-api-modules`:
+For the app to resolve the Node-API dynamic library files, the app developer must update their Metro config to use a `resolveRequest` function exported from `react-native-node-api-modules`:
 
 ```javascript
 const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
@@ -126,61 +126,12 @@ NAPI_MODULE_INIT(/* napi_env env, napi_value exports */) {
 npx react-native-node-api-modules build ./addon.c
 ```
 
-This is a shorthand command which generates a CMake project from the single source-file and prebuilds for both the Apple and Android platforms. See the [CLI documentation](./CLI.md) for more information on the options available.
+This is a shorthand command which generates a CMake project from the single source-file and prebuilds for both the Apple and Android platforms. See the [CLI documentation](./CLI.md) for more information on the options available and [documentation on prebuilds](./PREBUILDS.md) for the specifics on their format and structure.
 
-<!-- TODO: Write more on the expected output of running this command -->
+<!-- TODO: Add a listing of the files produced when running command: Some temp (cached) CMakeList.txt, the CMake project dir, 2x platform specific prebuild directories -->
 
 ### Load and export the native module
 
 ```javascript
 module.exports = require("./prebuild.node");
 ```
-
-## Tracing a call to `add`
-
-<!-- TODO: Write this -->
-
-### `my-app` makes an `import`
-
-<!-- TODO: Write this -->
-
-### `calculator-lib` does `require("./prebuild.node")`
-
-<!-- TODO: Write this -->
-
-### Metro resolves the `./prebuild.node` and generates loading JavaScript
-
-<!-- TODO: Write this -->
-
-### Generated code calls into `react-native-node-api-modules`
-
-<!-- TODO: Write this -->
-
-### `react-native-node-api-modules` loads the platform specific dynamic library
-
-<!-- TODO: Write this -->
-
-### `react-native-node-api-modules` register the Node-API module
-
-<!-- TODO: Write this -->
-
-### `react-native-node-api-modules` creates a `node_env`
-
-<!-- TODO: Write this, detailing the call of `jsi::Runtime::createNodeApiEnv` -->
-
-### `react-native-node-api-modules` initialize the Node-API module
-
-<!-- TODO: Write this -->
-
-### The library's C++ code initialize the `exports` object
-
-<!-- TODO: Write this -->
-<!-- TODO: Mention the engine-specific symbols being implemented by Hermes -->
-
-### `my-app` regain control and call `add`
-
-<!-- TODO: Write this -->
-
-### The library's C++ code execute the native function
-
-<!-- TODO: Write this -->
