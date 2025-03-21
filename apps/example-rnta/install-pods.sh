@@ -1,0 +1,28 @@
+#!/bin/bash
+
+EXAMPLEAPP_DIR=$(dirname ${BASH_SOURCE[0]})
+MONOREPO_ROOT=$(realpath "${EXAMPLEAPP_DIR}/../..")
+
+# Make sure that the third-party directory exists
+export THIRDPARTY_DIR="${MONOREPO_ROOT}/3rdparty"
+mkdir -p "${THIRDPARTY_DIR}"
+
+# Check if custom version of Hermes was downloaded
+export REACT_NATIVE_OVERRIDE_HERMES_DIR="${THIRDPARTY_DIR}/hermes"
+if [ ! -f "${REACT_NATIVE_OVERRIDE_HERMES_DIR}/hermes-engine.podspec" ]; then
+  pushd "${THIRDPARTY_DIR}"
+    git clone --recursive https://github.com/kraenhansen/hermes.git
+    cd hermes && git checkout 5b9416cdbade53fcc2f647fb0b41534fcd0701b9
+  popd
+fi
+
+# Install Pods
+pushd "${EXAMPLEAPP_DIR}/ios"
+  # Primitive check: Remove "old" Pods (if requested)
+  if [ "$1" = "-r" ] || [ "$1" = '--reinstall' ]; then
+    [[ -d Pods ]] && rm -rf Pods/
+    [[ -d build ]] && rm -rf build/
+  fi
+
+  pod install
+popd
