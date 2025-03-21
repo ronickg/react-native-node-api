@@ -1,6 +1,31 @@
 {
-  "files": [],
-  "references": [
-    { "path": "./packages/react-native-node-api-modules/tsconfig.json" }
-  ]
+  "compilerOptions": {
+    "rootDir": ".",
+    "paths": {
+      "react-native-node-api-cli": ["./packages/react-native-node-api-cli/src/index"],
+      "react-native-node-api-host": ["./packages/react-native-node-api-host/src/index"]
+    },
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "jsx": "react-jsx",
+    "lib": ["ESNext"],
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "noEmit": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "noImplicitUseStrict": false,
+    "noStrictGenericChecks": false,
+    "noUncheckedIndexedAccess": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "resolveJsonModule": true,
+    "resolvePackageJsonImports": false,
+    "skipLibCheck": true,
+    "strict": true,
+    "target": "ESNext",
+    "verbatimModuleSyntax": true
+  }
 }
