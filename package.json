@@ -15,7 +15,8 @@
     "typecheck": "turbo run typecheck",
     "build": "turbo run build",
     "build:android": "turbo run build:android",
-    "build:ios": "turbo run build:ios"
+    "build:ios": "turbo run build:ios",
+    "example": "npm run --workspace react-native-node-api-modules-example --"
   },
   "author": {
     "name": "Callstack",
@@ -46,5 +47,6 @@
     "typescript": "^5.0.4",
     "typescript-eslint": "^8.22.0",
     "vitest": "^2.1.8"
-  }
+  },
+  "packageManager": "npm@10.0.0"
 }
