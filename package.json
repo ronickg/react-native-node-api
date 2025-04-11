@@ -1,12 +1,10 @@
 {
-  "name": "@react-native-node-api-modules/monorepo",
+  "name": "react-native-node-api-modules-monorepo",
   "description": "Node-API Modules for React Native",
   "type": "module",
-  "version": "0.1.0",
   "private": true,
   "workspaces": [
-    "packages/*",
-    "apps/example-rnta"
+    "packages/react-native-node-api-modules"
   ],
   "homepage": "https://github.com/callstackincubator/react-native-node-api-modules#readme",
   "scripts": {
@@ -30,23 +28,16 @@
   ],
   "license": "MIT",
   "devDependencies": {
-    "@biomejs/biome": "1.9.4",
-    "@commitlint/config-conventional": "^17.0.2",
     "@eslint/js": "^9.19.0",
-    "@evilmartians/lefthook": "^1.5.0",
     "@react-native/eslint-config": "0.76.0",
-    "@release-it/conventional-changelog": "^5.0.0",
     "@tsconfig/node22": "^22.0.0",
     "@tsconfig/react-native": "3.0.5",
     "@types/node": "^22.13.0",
-    "commitlint": "^17.0.2",
     "eslint": "^8",
-    "react-native-test-app": "^3.10.18",
-    "release-it": "^15.0.0",
+    "react-native": "0.77.0",
     "turbo": "^2.3.3",
-    "typescript": "^5.0.4",
-    "typescript-eslint": "^8.22.0",
-    "vitest": "^2.1.8"
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.22.0"
   },
   "packageManager": "npm@10.0.0"
 }
