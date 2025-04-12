@@ -4,7 +4,8 @@
   "type": "module",
   "private": true,
   "workspaces": [
-    "packages/react-native-node-api-modules"
+    "apps/*",
+    "packages/*"
   ],
   "homepage": "https://github.com/callstackincubator/react-native-node-api-modules#readme",
   "scripts": {
@@ -28,16 +29,17 @@
   ],
   "license": "MIT",
   "devDependencies": {
-    "@eslint/js": "^9.19.0",
+    "@eslint/js": "^8.57.1",
     "@react-native/eslint-config": "0.76.0",
     "@tsconfig/node22": "^22.0.0",
-    "@tsconfig/react-native": "3.0.5",
+    "@tsconfig/react-native": "^3.0.5",
     "@types/node": "^22.13.0",
-    "eslint": "^8",
-    "react-native": "0.77.0",
+    "eslint": "^8.57.0",
+    "prettier": "^3.5.3",
+    "react-native": "0.76.0",
     "turbo": "^2.3.3",
-    "typescript": "^5.7.3",
-    "typescript-eslint": "^8.22.0"
+    "typescript": "5.8.3",
+    "typescript-eslint": "^8.29.1"
   },
   "packageManager": "npm@10.0.0"
 }

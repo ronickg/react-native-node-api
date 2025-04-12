@@ -20,8 +20,5 @@
     "core-js": "^3.40.0",
     "nypm": "^0.6.0",
     "ora": "^8.1.0"
-  },
-  "devDependencies": {
-    "typescript": "^5.0.4"
   }
 }

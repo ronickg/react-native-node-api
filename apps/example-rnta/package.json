@@ -28,8 +28,6 @@
     "@react-native/typescript-config": "0.76.7",
     "@rnx-kit/metro-config": "^2.0.0",
     "@types/react": "^18.3.0",
-    "eslint": "^8.19.0",
-    "prettier": "2.8.8",
     "react-native-builder-bob": "^0.36.0",
     "react-native-test-app": "^3.10.18",
     "typescript": "^5.0.4"
