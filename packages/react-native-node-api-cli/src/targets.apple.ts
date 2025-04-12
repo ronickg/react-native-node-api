@@ -1,12 +1,12 @@
 export type AppleSDK =
-  | 'iphoneos'
-  | 'iphonesimulator'
-  | 'catalyst'
-  | 'xros'
-  | 'xrsimulator'
-  | 'appletvos'
-  | 'appletvsimulator'
-  | 'macosx';
+  | "iphoneos"
+  | "iphonesimulator"
+  | "catalyst"
+  | "xros"
+  | "xrsimulator"
+  | "appletvos"
+  | "appletvsimulator"
+  | "macosx";
 
 export interface TargetDescriptionApple {
   sdk: AppleSDK;

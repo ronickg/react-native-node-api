@@ -1,30 +1,26 @@
-import { type PackageJson } from './types.js';
-import { type TargetDescriptionApple } from './targets.apple.js';
+import { type PackageJson } from "./types.js";
+import { type TargetDescriptionApple } from "./targets.apple.js";
 
 export type TargetCPU =
-  | 'x64'
-  | 'x32'
-  | 'arm64'
-  | 'arm'
-  | 'ia32'
-  | 'mips'
-  | 'mips64'
-  | 'ppc'
-  | 'ppc64';
+  | "x64"
+  | "x32"
+  | "arm64"
+  | "arm"
+  | "ia32"
+  | "mips"
+  | "mips64"
+  | "ppc"
+  | "ppc64";
 
 export type TargetOS =
-  | 'darwin'
-  | 'linux'
-  | 'win32'
-  | 'freebsd'
-  | 'openbsd'
-  | 'sunos';
+  | "darwin"
+  | "linux"
+  | "win32"
+  | "freebsd"
+  | "openbsd"
+  | "sunos";
 
-export type TargetOSExtra =
-  | 'android'
-  | 'ios'
-  | 'tvos'
-  | 'visionos';
+export type TargetOSExtra = "android" | "ios" | "tvos" | "visionos";
 
 export interface TargetDescription {
   cpu: TargetCPU[];
@@ -33,12 +29,12 @@ export interface TargetDescription {
   apple?: TargetDescriptionApple;
 }
 
-export const SUPPORTED_TARGETS: {[triple: string]: TargetDescription} = {
+export const SUPPORTED_TARGETS: { [triple: string]: TargetDescription } = {
   // Apple
   "aarch64-apple-darwin": {
-    cpu: ['arm64'],
-    os: ['darwin'],
-    apple: { sdk: 'macosx', target: 'arm64-apple-darwin' },
+    cpu: ["arm64"],
+    os: ["darwin"],
+    apple: { sdk: "macosx", target: "arm64-apple-darwin" },
   },
   // "x86_64-apple-darwin": { // # FIXME: Both 'macos-arm64' and 'macos-x86_64' represent tow equivalent library definitions.
   //   cpu: ['x64'],
@@ -46,15 +42,15 @@ export const SUPPORTED_TARGETS: {[triple: string]: TargetDescription} = {
   //   apple: { sdk: 'macosx', target: 'x86_64-apple-darwin' },
   // },
   "aarch64-apple-ios": {
-    cpu: ['arm64'],
-    os: ['ios'],
-    apple: { sdk: 'iphoneos', target: 'arm64-apple-ios' },
+    cpu: ["arm64"],
+    os: ["ios"],
+    apple: { sdk: "iphoneos", target: "arm64-apple-ios" },
   },
   "aarch64-apple-ios-sim": {
-    cpu: ['arm64'],
-    os: ['ios'],
-    variant: 'sim',
-    apple: { sdk: 'iphonesimulator', target: 'arm64-apple-ios-simulator' },
+    cpu: ["arm64"],
+    os: ["ios"],
+    variant: "sim",
+    apple: { sdk: "iphonesimulator", target: "arm64-apple-ios-simulator" },
   },
   // "x86_64-apple-ios": {
   //   cpu: ['x64'],
@@ -78,37 +74,38 @@ export const SUPPORTED_TARGETS: {[triple: string]: TargetDescription} = {
   //   apple: { sdk: 'iphoneos' },
   // },
   "aarch64-apple-tvos": {
-    cpu: ['arm64'],
-    os: ['tvos'],
-    apple: { sdk: 'appletvos' },
+    cpu: ["arm64"],
+    os: ["tvos"],
+    apple: { sdk: "appletvos" },
   },
   "aarch64-apple-tvos-sim": {
-    cpu: ['arm64'],
-    os: ['tvos'],
-    variant: 'sim',
-    apple: { sdk: 'appletvsimulator' },
+    cpu: ["arm64"],
+    os: ["tvos"],
+    variant: "sim",
+    apple: { sdk: "appletvsimulator" },
   },
   "x86_64-apple-tvos": {
-    cpu: ['x64'],
-    os: ['tvos'],
-    apple: { sdk: 'appletvos' },
+    cpu: ["x64"],
+    os: ["tvos"],
+    apple: { sdk: "appletvos" },
   },
   "aarch64-apple-visionos": {
-    cpu: ['arm64'],
-    os: ['visionos'],
-    apple: { sdk: 'xros' },
+    cpu: ["arm64"],
+    os: ["visionos"],
+    apple: { sdk: "xros" },
   },
   "aarch64-apple-visionos-sim": {
-    cpu: ['arm64'],
-    os: ['visionos'],
-    variant: 'sim',
-    apple: { sdk: 'xrsimulator' },
+    cpu: ["arm64"],
+    os: ["visionos"],
+    variant: "sim",
+    apple: { sdk: "xrsimulator" },
   },
 };
 
-export function guessTargetsFromPackageJson(pkg: PackageJson): (keyof typeof SUPPORTED_TARGETS)[]
-{
-  let guessedOs: (TargetOS | TargetOSExtra)[] = [];
+export function guessTargetsFromPackageJson(
+  pkg: PackageJson,
+): (keyof typeof SUPPORTED_TARGETS)[] {
+  const guessedOs: (TargetOS | TargetOSExtra)[] = [];
 
   {
     // Start by checking dependencies
@@ -117,31 +114,31 @@ export function guessTargetsFromPackageJson(pkg: PackageJson): (keyof typeof SUP
       ...(pkg.dependencies || {}),
     });
 
-    if (dependencyNames.includes('react-native-tvos')) {
-      guessedOs.push('android', 'ios', 'tvos');
-    } else if (dependencyNames.includes('react-native')) {
-      guessedOs.push('android', 'ios');
+    if (dependencyNames.includes("react-native-tvos")) {
+      guessedOs.push("android", "ios", "tvos");
+    } else if (dependencyNames.includes("react-native")) {
+      guessedOs.push("android", "ios");
     }
-    if (dependencyNames.includes('react-native-windows')) {
-      guessedOs.push('win32');
+    if (dependencyNames.includes("react-native-windows")) {
+      guessedOs.push("win32");
     }
-    if (dependencyNames.includes('react-native-visionos')) {
-      guessedOs.push('visionos');
+    if (dependencyNames.includes("react-native-visionos")) {
+      guessedOs.push("visionos");
     }
   }
 
   {
     // Check if 'node' is in `engines`
     const engineNames = Object.keys(pkg?.engines || {});
-    if (engineNames.includes('node')) {
-      guessedOs.push('win32', 'darwin', 'linux');
+    if (engineNames.includes("node")) {
+      guessedOs.push("win32", "darwin", "linux");
     }
   }
 
   // Remove duplicated OS guesses and collect targets for them
-  return [...new Set(guessedOs)].flatMap(os =>
+  return [...new Set(guessedOs)].flatMap((os) =>
     Object.entries(SUPPORTED_TARGETS)
-      .filter(([_, desc]) => desc.os.find(v => v.startsWith(os)))
-      .map(([triple, _]) => triple)
+      .filter(([_, desc]) => desc.os.find((v) => v.startsWith(os)))
+      .map(([triple, _]) => triple),
   );
 }

@@ -1,4 +1,4 @@
-import NodeApiHost from './NativeNodeApiHost';
+import NodeApiHost from "./NativeNodeApiHost";
 
 export function multiply(a: number, b: number): number {
   return NodeApiHost.multiply(a, b);

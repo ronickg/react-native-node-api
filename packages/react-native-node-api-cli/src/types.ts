@@ -1,17 +1,17 @@
-import type { TargetCPU, TargetOS, TargetOSExtra } from './targets.js';
+import type { TargetCPU, TargetOS, TargetOSExtra } from "./targets.js";
 
 export interface PackageJson {
   name: string;
   version: string;
   private?: boolean;
   main?: string;
-  scripts?: {[name: string]: string};
-  dependencies?: {[name: string]: string};
-  devDependencies?: {[name: string]: string};
-  peerDependencies?: {[name: string]: string};
-  optionalDependencies?: {[name: string]: string};
+  scripts?: { [name: string]: string };
+  dependencies?: { [name: string]: string };
+  devDependencies?: { [name: string]: string };
+  peerDependencies?: { [name: string]: string };
+  optionalDependencies?: { [name: string]: string };
   files?: string[];
-  engines?: {[name: string]: string};
+  engines?: { [name: string]: string };
   os?: (TargetOS | TargetOSExtra)[];
   cpu?: TargetCPU[];
   gypfile?: boolean;

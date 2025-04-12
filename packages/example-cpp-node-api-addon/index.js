@@ -1,3 +1,3 @@
-const addon = require('./build/Release/hello-cpp-example');
+const addon = require("./build/Release/hello-cpp-example");
 
 module.exports = addon.HelloWorld;
