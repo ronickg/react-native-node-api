@@ -36,7 +36,7 @@ const project = (() => {
       //   ...monorepoDependencies,
       // },
     };
-  } catch (_) {
+  } catch {
     return undefined;
   }
 })();

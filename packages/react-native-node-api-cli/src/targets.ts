@@ -138,7 +138,7 @@ export function guessTargetsFromPackageJson(
   // Remove duplicated OS guesses and collect targets for them
   return [...new Set(guessedOs)].flatMap((os) =>
     Object.entries(SUPPORTED_TARGETS)
-      .filter(([_, desc]) => desc.os.find((v) => v.startsWith(os)))
-      .map(([triple, _]) => triple),
+      .filter(([, desc]) => desc.os.find((v) => v.startsWith(os)))
+      .map(([triple]) => triple),
   );
 }

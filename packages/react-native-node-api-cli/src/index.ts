@@ -10,9 +10,5 @@ const program = new Command()
 program.addCommand(initModuleCommand);
 
 (async function run() {
-  try {
-    await program.parseAsync();
-  } catch (e) {
-    throw e;
-  }
+  await program.parseAsync();
 })();
