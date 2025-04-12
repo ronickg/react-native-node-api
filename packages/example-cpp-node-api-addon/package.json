@@ -1,6 +1,7 @@
 {
   "name": "example-cpp-node-api-addon",
   "version": "0.1.0",
+  "type": "commonjs",
   "homepage": "https://github.com/callstackincubator/react-native-node-api-modules#readme",
   "author": "Mario Pasinski <mario@callstack.com> (https://github.com/callstackincubator)",
   "license": "MIT",
@@ -12,10 +13,6 @@
     "index.js",
     "index.d.ts"
   ],
-  "scripts": {
-    "format": "prettier . --write",
-    "lint": "eslint ."
-  },
   "devDependencies": {
     "cmake-js": "^7.3.0",
     "node-api-headers": "^1.5.0",
