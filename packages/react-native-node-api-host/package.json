@@ -64,18 +64,15 @@
   },
   "devDependencies": {
     "@react-native-community/cli": "^15.0.0",
-    "@types/react": "^18.2.44",
+    "@types/react": "^19",
     "del-cli": "^5.1.0",
-    "react": "18.3.1",
-    "react-native": "^0.76.0",
+    "react": "19.0.0",
+    "react-native": "0.79.0",
     "react-native-builder-bob": "^0.36.0"
-  },
-  "resolutions": {
-    "@types/react": "^18.2.44"
   },
   "peerDependencies": {
     "react": "*",
-    "react-native": "*"
+    "react-native": "0.79.0"
   },
   "react-native-builder-bob": {
     "source": "src",

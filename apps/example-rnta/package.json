@@ -11,8 +11,8 @@
     "start": "react-native start"
   },
   "dependencies": {
-    "react": "18.3.1",
-    "react-native": "^0.76.0",
+    "react": "19.0.0",
+    "react-native": "0.79.0",
     "react-native-node-api-host": "*"
   },
   "devDependencies": {
@@ -26,9 +26,9 @@
     "@react-native/metro-config": "^0.76.0",
     "@react-native/typescript-config": "0.76.7",
     "@rnx-kit/metro-config": "^2.0.0",
-    "@types/react": "^18.3.0",
+    "@types/react": "^19",
     "react-native-builder-bob": "^0.36.0",
-    "react-native-test-app": "^3.10.18",
+    "react-native-test-app": "^4.3.3",
     "typescript": "^5.0.4"
   },
   "engines": {
