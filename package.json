@@ -15,7 +15,9 @@
     "build": "turbo run build",
     "build:android": "turbo run build:android",
     "build:ios": "turbo run build:ios",
-    "example": "npm run --workspace react-native-node-api-modules-example --"
+    "example": "npm run --workspace react-native-node-api-modules-example --",
+    "prettier:check": "prettier --check .",
+    "prettier:write": "prettier --write ."
   },
   "author": {
     "name": "Callstack",
