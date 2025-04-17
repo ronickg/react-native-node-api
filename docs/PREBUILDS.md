@@ -2,7 +2,7 @@
 
 This document will codify the naming and directory structure of prebuilt binaries, expected by the `react-native-node-api-modules` package and tools.
 
-To align with prior art and established patterns around the distribution of Node-API modules for Node.js (and other engines supporting this), 
+To align with prior art and established patterns around the distribution of Node-API modules for Node.js (and other engines supporting this),
 
 ## Apple: XCFrameworks of dynamic libraries in frameworks
 

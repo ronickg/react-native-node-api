@@ -1,4 +1,3 @@
-
 # How it works
 
 This document will outline what happens throughout the various parts of the system, when the app calls the `add` method on the library introduced in the ["usage" document](./USAGE.md).
@@ -51,6 +50,7 @@ If we don't have one for the current `jsi::Runtime` already, one is created, by 
 ## The library's C++ code initialize the `exports` object
 
 An `exports` object is created for the Node-API module and both the `napi_env` and `exports` object is passed to the Node-API module's initialization function and the third party code is able to call the Node-API free functions:
+
 - The engine-specific functions (see [js_native_api.h](https://github.com/nodejs/node/blob/main/src/js_native_api.h)) are implemented by the `jsi::Runtime` (currently only Hermes supports this).
 - The runtime-specific functions (see [node_api.h](https://github.com/nodejs/node/blob/main/src/node_api.h)) are implemented by `react-native-node-api-modules`.
 

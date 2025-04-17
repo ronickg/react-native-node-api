@@ -13,7 +13,7 @@ export default tseslint.config(
       "**/metro-config.js",
       "**/react-native.config.js",
       "packages/example-cpp-node-api-addon/*.js",
-      "packages/react-native-node-api-modules/bin/*.js"
+      "packages/react-native-node-api-modules/bin/*.js",
     ],
     languageOptions: {
       parserOptions: {

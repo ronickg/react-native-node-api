@@ -3,6 +3,7 @@
 The purpose of this document is to explain how Node-API modules are supported all the way from an app loading a library package to the library's native code returning a JavaScript value to from a function call.
 
 For the purpose of the explanation, we'll introduce a two fictitious packages:
+
 - `calculator-lib`: A package publishing a Node-API module.
 - `my-app`: An app depending on `calculator-lib`.
 
@@ -16,12 +17,12 @@ The app developer has to install both `calculator-lib` as well as `react-native-
 The reason for the latter is a current limitation of the React Native Community CLI which doesn't consider transitive dependencies when enumerating packages for auto-linking.
 
 > [!WARNING]
->  It's important to match the exact version of the `react-native-node-api-modules` declared as peer dependency by `calculator-lib`.
+> It's important to match the exact version of the `react-native-node-api-modules` declared as peer dependency by `calculator-lib`.
 
 For the app to resolve the Node-API dynamic library files, the app developer must update their Metro config to use a `resolveRequest` function exported from `react-native-node-api-modules`:
 
 ```javascript
-const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
+const { getDefaultConfig, mergeConfig } = require("@react-native/metro-config");
 const nodeApi = require("react-native-node-api-modules/metro-config");
 module.exports = mergeConfig(getDefaultConfig(__dirname), {
   resolver: { resolveRequest: nodeApi.resolveRequest },

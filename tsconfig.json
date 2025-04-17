@@ -2,8 +2,12 @@
   "compilerOptions": {
     "rootDir": ".",
     "paths": {
-      "react-native-node-api-cli": ["./packages/react-native-node-api-cli/src/index"],
-      "react-native-node-api-host": ["./packages/react-native-node-api-host/src/index"]
+      "react-native-node-api-cli": [
+        "./packages/react-native-node-api-cli/src/index"
+      ],
+      "react-native-node-api-host": [
+        "./packages/react-native-node-api-host/src/index"
+      ]
     },
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,
