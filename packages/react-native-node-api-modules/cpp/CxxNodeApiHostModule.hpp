@@ -24,12 +24,10 @@ public:
 protected:
   struct NodeAddon {
     void *moduleHandle;
-    napi_addon_register_func registerFn;
-    napi_value cachedExports;
+    napi_addon_register_func init;
     std::string generatedName;
   };
   std::unordered_map<std::string, NodeAddon> nodeAddons_;
-  napi_env napiEnv_{};
   using LoaderPolicy = PosixLoader; // FIXME: HACK: This is temporary workaround
                                     // for my lazyness (work on iOS and Android)
 
