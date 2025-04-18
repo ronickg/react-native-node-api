@@ -7,12 +7,16 @@ MONOREPO_ROOT=$(realpath "${EXAMPLEAPP_DIR}/../..")
 export THIRDPARTY_DIR="${MONOREPO_ROOT}/3rdparty"
 mkdir -p "${THIRDPARTY_DIR}"
 
+REACT_NATIVE_DIR="${MONOREPO_ROOT}/node_modules/react-native"
+
 # Check if custom version of Hermes was downloaded
 export REACT_NATIVE_OVERRIDE_HERMES_DIR="${THIRDPARTY_DIR}/hermes"
 if [ ! -f "${REACT_NATIVE_OVERRIDE_HERMES_DIR}/hermes-engine.podspec" ]; then
   pushd "${THIRDPARTY_DIR}"
     git clone --recursive --depth 1 --branch node-api-for-react-native-0.79.0 https://github.com/kraenhansen/hermes.git
   popd
+  # Copy hermes's JSI headers to the react-native directory
+  cp -rf $THIRDPARTY_DIR/hermes/API/jsi/jsi/ $REACT_NATIVE_DIR/ReactCommon/jsi/jsi/
 fi
 
 # Install Pods
