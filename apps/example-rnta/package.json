@@ -8,7 +8,8 @@
     "build:ios": "npm run mkdist && react-native bundle --entry-file index.js --platform ios --dev true --bundle-output dist/main.ios.jsbundle --assets-dest dist",
     "ios": "react-native run-ios",
     "mkdist": "node -e \"require('node:fs').mkdirSync('dist', { recursive: true, mode: 0o755 })\"",
-    "start": "react-native start"
+    "start": "react-native start",
+    "pod-install": "./install-pods.sh"
   },
   "dependencies": {
     "react": "19.0.0",
