@@ -41,7 +41,6 @@ protected:
   napi_env napiEnv_{};
   using LoaderPolicy = PosixLoader; // FIXME: HACK: This is temporary workaround for my lazyness (work on iOS and Android)
 
-  bool initializeNodeApiEnv(facebook::jsi::Runtime &rt);
   bool loadNodeAddon(NodeAddon &addon, const std::string &path) const;
   bool initializeNodeModule(facebook::jsi::Runtime &rt, NodeAddon &addon);
 };

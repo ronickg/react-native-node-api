@@ -50,11 +50,6 @@ jsi::Value CxxNodeApiHostModule::multiply(
 }
 
 jsi::Value CxxNodeApiHostModule::requireNodeAddon(jsi::Runtime &rt, const jsi::String path) {
-  if (NULL == napiEnv_) {
-    const bool wasInitialized = initializeNodeApiEnv(rt);
-    assert(wasInitialized && NULL != napiEnv_);
-  }
-
   const std::string pathStr = path.utf8(rt);
 
   // Check if this module has been loaded already, if not then load it...
@@ -80,27 +75,6 @@ jsi::Value CxxNodeApiHostModule::requireNodeAddon(jsi::Runtime &rt, const jsi::S
 
 jsi::Value CxxNodeApiHostModule::multiply(jsi::Runtime &rt, double a, double b) {
   return jsi::Value(a * b);
-}
-
-bool CxxNodeApiHostModule::initializeNodeApiEnv(jsi::Runtime &runtime)
-{
-  // Get access to Hermes' Runtime
-  facebook::hermes::HermesRuntime *hermesJsiRt = (facebook::hermes::HermesRuntime *)&runtime;
-  ::hermes::vm::Runtime *rt = hermesJsiRt->getVMRuntimeUnsafe();
-  assert(NULL != rt);
-
-  // Initialize NodeAPI environment within Hermes Runtime
-  const bool isInspectable = true;
-  ::hermes::vm::RuntimeConfig rtConfig = {};
-  std::shared_ptr<jsi::PreparedScriptStore> scriptCache = {};
-  const napi_status status = hermes_create_napi_env(*rt, isInspectable, scriptCache, rtConfig, &napiEnv_);
-
-  // Expose the `requireNodeAddon` as global function
-  jsi::PropNameID requireNodeAddonId = jsi::PropNameID::forAscii(runtime, "requireNodeAddon");
-  jsi::Value requireNodeAddonFn = create(runtime, requireNodeAddonId);
-  runtime.global().setProperty(runtime, requireNodeAddonId, requireNodeAddonFn);
-
-  return napi_ok == status;
 }
 
 bool CxxNodeApiHostModule::loadNodeAddon(NodeAddon &addon, const std::string &path) const
