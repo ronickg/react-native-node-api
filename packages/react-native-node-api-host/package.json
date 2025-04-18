@@ -42,7 +42,8 @@
     "typecheck": "tsc",
     "clean": "del-cli android/build example/android/build example/android/app/build example/ios/build lib",
     "prepare": "bob build",
-    "release": "release-it"
+    "release": "release-it",
+    "copy-node-api-headers": "node copy-node-api-headers.mjs"
   },
   "keywords": [
     "react-native",
@@ -66,6 +67,7 @@
     "@react-native-community/cli": "^15.0.0",
     "@types/react": "^19",
     "del-cli": "^5.1.0",
+    "node-api-headers": "^1.5.0",
     "react": "19.0.0",
     "react-native": "0.79.0",
     "react-native-builder-bob": "^0.36.0"
@@ -115,8 +117,5 @@
     "type": "turbo-module",
     "languages": "cpp",
     "version": "0.48.3"
-  },
-  "dependencies": {
-    "node-api-headers": "^1.5.0"
   }
 }

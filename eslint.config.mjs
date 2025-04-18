@@ -28,4 +28,14 @@ export default tseslint.config(
       "@typescript-eslint/no-require-imports": "off",
     },
   },
+  {
+    files: [
+      "packages/react-native-node-api-host/copy-node-api-headers.mjs",
+    ],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+      },
+    },
+  }
 );
