@@ -10,7 +10,7 @@ namespace callstack::nodeapihost {
 
 class JSI_EXPORT CxxNodeApiHostModule : public facebook::react::TurboModule {
 public:
-  static constexpr std::string kModuleName = "NodeApiHost";
+  static constexpr const char *kModuleName = "NodeApiHost";
 
   CxxNodeApiHostModule(std::shared_ptr<facebook::react::CallInvoker> jsInvoker);
 
