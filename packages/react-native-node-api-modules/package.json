@@ -19,7 +19,8 @@
     }
   },
   "scripts": {
-    "build": "tsc --build"
+    "build": "tsc --build",
+    "copy-node-api-headers": "node scripts/copy-node-api-headers.mjs"
   },
   "keywords": [
     "react-native",
@@ -48,6 +49,10 @@
   ],
   "license": "MIT",
   "devDependencies": {
-    "metro-config": "0.81.1"
+    "metro-config": "0.81.1",
+    "node-api-headers": "^1.5.0"
+  },
+  "peerDependencies": {
+    "react-native": "0.79.0"
   }
 }

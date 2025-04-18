@@ -24,4 +24,21 @@ export default tseslint.config(
       "@typescript-eslint/no-require-imports": "off",
     },
   },
+  {
+    files: [
+      "packages/react-native-node-api-modules/scripts/*.mjs"
+    ],
+    languageOptions: {
+      parserOptions: {
+        sourceType: "commonjs",
+      },
+      globals: {
+        ...globals.node,
+      },
+    },
+    rules: {
+      // We're using CommonJS here for Node.js backwards compatibility
+      "@typescript-eslint/no-require-imports": "off",
+    },
+  },
 );
