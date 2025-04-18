@@ -117,7 +117,7 @@ bool CxxNodeApiHostModule::loadNodeAddon(NodeAddon &addon, const std::string &pa
   return NULL != registratorFn;
 }
 
-bool CxxNodeApiHostModule::initializeNodeModule(napi_env env, NodeAddon &addon)
+bool CxxNodeApiHostModule::initializeNodeModule(jsi::Runtime &rt, NodeAddon &addon)
 {
   // We should check if the module has already been registered
   assert(NULL != addon.moduleHandle);

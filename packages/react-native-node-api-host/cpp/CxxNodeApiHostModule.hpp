@@ -43,7 +43,7 @@ protected:
 
   bool initializeNodeApiEnv(facebook::jsi::Runtime &rt);
   bool loadNodeAddon(NodeAddon &addon, const std::string &path) const;
-  bool initializeNodeModule(napi_env env, NodeAddon &addon);
+  bool initializeNodeModule(facebook::jsi::Runtime &rt, NodeAddon &addon);
 };
 
 } // namespace callstack::nodeapihost
