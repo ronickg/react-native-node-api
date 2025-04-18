@@ -4,7 +4,8 @@
   "type": "module",
   "private": true,
   "workspaces": [
-    "packages/react-native-node-api-modules"
+    "apps/*",
+    "packages/*"
   ],
   "homepage": "https://github.com/callstackincubator/react-native-node-api-modules#readme",
   "scripts": {
@@ -27,7 +28,8 @@
     "@tsconfig/react-native": "3.0.5",
     "@types/node": "^22.13.0",
     "eslint": "^9.19.0",
-    "react-native": "0.77.0",
+    "globals": "^16.0.0",
+    "react-native": "0.79.0",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.22.0"
   }
