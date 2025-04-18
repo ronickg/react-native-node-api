@@ -11,8 +11,7 @@ mkdir -p "${THIRDPARTY_DIR}"
 export REACT_NATIVE_OVERRIDE_HERMES_DIR="${THIRDPARTY_DIR}/hermes"
 if [ ! -f "${REACT_NATIVE_OVERRIDE_HERMES_DIR}/hermes-engine.podspec" ]; then
   pushd "${THIRDPARTY_DIR}"
-    git clone --recursive https://github.com/kraenhansen/hermes.git
-    cd hermes && git checkout 5b9416cdbade53fcc2f647fb0b41534fcd0701b9
+    git clone --recursive --depth 1 --branch node-api-for-react-native-0.79.0 https://github.com/kraenhansen/hermes.git
   popd
 fi
 
