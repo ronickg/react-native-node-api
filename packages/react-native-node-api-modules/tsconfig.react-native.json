@@ -8,5 +8,5 @@
     "rootDir": "src",
     "types": ["react-native"]
   },
-  "include": ["src/index.ts", "src/host"]
+  "include": ["src/host"]
 }

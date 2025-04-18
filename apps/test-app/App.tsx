@@ -1,7 +1,7 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 
-// import { multiply } from "react-native-node-api-host";
+import { requireNodeAddon } from "react-native-node-api-modules";
 
 function App(): React.JSX.Element {
   return (
