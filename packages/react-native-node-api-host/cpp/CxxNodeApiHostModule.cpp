@@ -1,16 +1,6 @@
 #include "CxxNodeApiHostModule.hpp"
 
-#include <hermes/hermes.h>
-#include <hermes/ScriptStore.h>
-
 using namespace facebook;
-
-extern napi_status hermes_create_napi_env(
-    ::hermes::vm::Runtime &runtime,
-    bool isInspectable,
-    std::shared_ptr<jsi::PreparedScriptStore> scriptCache,
-    const ::hermes::vm::RuntimeConfig &runtimeConfig,
-    napi_env *env);
 
 namespace callstack::nodeapihost {
 
@@ -63,12 +53,12 @@ jsi::Value CxxNodeApiHostModule::requireNodeAddon(jsi::Runtime &rt, const jsi::S
   // Library has been loaded, make sure that the "exports" was populated.
   // If not, then just call the "napi_register_module_v1" function...
   NodeAddon& addon = nodeAddons_[pathStr];
-  if (NULL == addon.cachedExports) {
-    if (!initializeNodeModule(napiEnv_, addon)) {
-      return jsi::Value::undefined();
-    }
+  
+  // Initialize the addon if it has not already been initialized
+  if (!rt.global().hasProperty(rt, addon.generatedName.data())) {
+    initializeNodeModule(rt, addon);
   }
-
+  
   // Look the exports up (using JSI) and return it...
   return rt.global().getProperty(rt, addon.generatedName.data());
 }
@@ -79,42 +69,52 @@ jsi::Value CxxNodeApiHostModule::multiply(jsi::Runtime &rt, double a, double b) 
 
 bool CxxNodeApiHostModule::loadNodeAddon(NodeAddon &addon, const std::string &path) const
 {
-  typename LoaderPolicy::Symbol registratorFn = NULL;
+  typename LoaderPolicy::Symbol initFn = NULL;
   typename LoaderPolicy::Module library = LoaderPolicy::loadLibrary(path.c_str());
   if (NULL != library) {
     addon.moduleHandle = library;
-    registratorFn = LoaderPolicy::getSymbol(library, "napi_register_module_v1");
-    if (NULL != registratorFn) {
-      addon.registerFn = (napi_addon_register_func)registratorFn;
+    
+    // Generate a name allowing us to reference the exports object from JSI later
+    // Instead of using random numbers to avoid name clashes, we just use the pointer address of the loaded module
+    addon.generatedName.resize(32, '\0');
+    snprintf(addon.generatedName.data(), addon.generatedName.size(), "RN$NodeAddon_%lX", (uintptr_t)addon.moduleHandle);
+    
+    initFn = LoaderPolicy::getSymbol(library, "napi_register_module_v1");
+    if (NULL != initFn) {
+      addon.init = (napi_addon_register_func)initFn;
     }
+    // TODO: Read "node_api_module_get_api_version_v1" to support the addon declaring its Node-API version
+    // @see https://github.com/callstackincubator/react-native-node-api-modules/issues/4
   }
-  return NULL != registratorFn;
+  return NULL != initFn;
 }
 
 bool CxxNodeApiHostModule::initializeNodeModule(jsi::Runtime &rt, NodeAddon &addon)
 {
-  // We should check if the module has already been registered
+  // We should check if the module has already been initialized
   assert(NULL != addon.moduleHandle);
-  assert(NULL != addon.registerFn);
+  assert(NULL != addon.init);
   napi_status status = napi_ok;
-  napi_value &exports = addon.cachedExports;
+  // TODO: Read the version from the addon
+  // @see https://github.com/callstackincubator/react-native-node-api-modules/issues/4
+  napi_env env = reinterpret_cast<napi_env>(rt.createNodeApiEnv(8));
 
   // Create the "exports" object
-  status = napi_create_object(napiEnv_, &exports);
-  if (napi_ok != status) {
-    return false;
-  }
+  napi_value exports;
+  status = napi_create_object(env, &exports);
+  assert(status == napi_ok);
 
-  // Call the addon registration function to populate the "exports" object
-  addon.registerFn(napiEnv_, exports);
-
-  // Instead of using random numbers to avoid name clashes, we just use the pointer address of the loaded module
-  addon.generatedName.resize(32, '\0');
-  snprintf(addon.generatedName.data(), addon.generatedName.size(), "RN$NodeAddon_%lX", (uintptr_t)addon.moduleHandle);
+  // Call the addon init function to populate the "exports" object
+  // Allowing it to replace the value entirely by its return value
+  exports = addon.init(env, exports);
 
   napi_value global;
-  napi_get_global(napiEnv_, &global);
-  napi_set_named_property(napiEnv_, global, addon.generatedName.data(), addon.cachedExports);
+  napi_get_global(env, &global);
+  assert(status == napi_ok);
+  
+  status = napi_set_named_property(env, global, addon.generatedName.data(), exports);
+  assert(status == napi_ok);
+  
   return true;
 }
 
