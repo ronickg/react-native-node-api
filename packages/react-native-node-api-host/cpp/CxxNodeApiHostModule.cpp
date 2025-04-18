@@ -69,7 +69,7 @@ jsi::Value CxxNodeApiHostModule::requireNodeAddon(jsi::Runtime &rt, const jsi::S
   // If not, then just call the "napi_register_module_v1" function...
   NodeAddon& addon = nodeAddons_[pathStr];
   if (NULL == addon.cachedExports) {
-    if (!registerNodeModule(napiEnv_, addon)) {
+    if (!initializeNodeModule(napiEnv_, addon)) {
       return jsi::Value::undefined();
     }
   }
@@ -117,7 +117,7 @@ bool CxxNodeApiHostModule::loadNodeAddon(NodeAddon &addon, const std::string &pa
   return NULL != registratorFn;
 }
 
-bool CxxNodeApiHostModule::registerNodeModule(napi_env env, NodeAddon &addon)
+bool CxxNodeApiHostModule::initializeNodeModule(napi_env env, NodeAddon &addon)
 {
   // We should check if the module has already been registered
   assert(NULL != addon.moduleHandle);
