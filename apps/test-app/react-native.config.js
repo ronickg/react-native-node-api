@@ -5,7 +5,7 @@ const project = (() => {
     const project = configureProjects({
       ios: {
         sourceDir: "ios",
-        // automaticPodsInstallation: false,
+        automaticPodsInstallation: false,
       },
       // android: {
       //   sourceDir: "android",
