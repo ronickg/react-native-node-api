@@ -26,17 +26,15 @@ jsi::Value CxxNodeApiHostModule::requireNodeAddon(jsi::Runtime &rt,
                                                   const jsi::String path) {
   const std::string pathStr = path.utf8(rt);
 
+  auto [it, inserted] = nodeAddons_.emplace(pathStr);
+  NodeAddon &addon = it->second;
+  
   // Check if this module has been loaded already, if not then load it...
-  if (nodeAddons_.end() == nodeAddons_.find(pathStr)) {
-    NodeAddon &addon = nodeAddons_[pathStr];
+  if (inserted) {
     if (!loadNodeAddon(addon, pathStr)) {
       return jsi::Value::undefined();
     }
   }
-
-  // Library has been loaded, make sure that the "exports" was populated.
-  // If not, then just call the "napi_register_module_v1" function...
-  NodeAddon &addon = nodeAddons_[pathStr];
 
   // Initialize the addon if it has not already been initialized
   if (!rt.global().hasProperty(rt, addon.generatedName.data())) {
