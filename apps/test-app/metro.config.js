@@ -1,4 +1,5 @@
 const { makeMetroConfig } = require("@rnx-kit/metro-config");
+const { resolveRequest } = require("react-native-node-api-modules/metro-resolver");
 
 module.exports = makeMetroConfig({
   transformer: {
@@ -9,4 +10,7 @@ module.exports = makeMetroConfig({
       },
     }),
   },
+  resolver: {
+    resolveRequest,
+  }
 });

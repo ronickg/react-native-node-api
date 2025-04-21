@@ -1,0 +1,15 @@
+{
+  "name": "react-native-node-addon-examples",
+  "private": true,
+  "scripts": {
+    "e2e": "rm -rf tests && npm run copy-examples && npm run gyp-to-cmake && npm run build",
+    "copy-examples": "tsx scripts/copy-examples.mts",
+    "gyp-to-cmake": "gyp-to-cmake ./examples",
+    "build": "tsx scripts/build-examples.mts"
+  },
+  "devDependencies": {
+    "node-addon-examples": "github:nodejs/node-addon-examples#4213d4c9d07996ae68629c67926251e117f8e52a",
+    "gyp-to-cmake": "*",
+    "react-native-node-api-cmake": "*"
+  }
+}

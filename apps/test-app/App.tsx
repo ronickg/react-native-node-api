@@ -1,12 +1,25 @@
 import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View, Button } from "react-native";
 
-import { requireNodeAddon } from "react-native-node-api-modules";
+// import { requireNodeAddon } from "react-native-node-api-modules";
+import nodeAddonExamples from "react-native-node-addon-examples";
 
 function App(): React.JSX.Element {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>React Native Node-API Modules</Text>
+      {Object.entries(nodeAddonExamples).map(([suiteName, examples]) => (
+        <View key={suiteName} style={styles.suite}>
+          <Text>{suiteName}</Text>
+          {Object.entries(examples).map(([exampleName, requireExample]) => (
+            <Button
+              key={exampleName}
+              title={exampleName}
+              onPress={requireExample}
+            />
+          ))}
+        </View>
+      ))}
     </View>
   );
 }
@@ -16,6 +29,12 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+  },
+  suite: {
+    borderWidth: 1,
+    width: "96%",
+    margin: 10,
+    padding: 10,
   },
   title: {
     fontSize: 20,
