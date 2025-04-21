@@ -1,0 +1,19 @@
+{
+  "name": "gyp-to-cmake",
+  "private": true,
+  "type": "module",
+  "version": "0.1.0",
+  "description": "Convert binding.gyp files to CMakeLists.txt",
+  "bin": {
+    "gyp-to-cmake": "./bin/gyp-to-cmake.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "tsx src/run.ts",
+    "test": "tsx --test"
+  },
+  "dependencies": {
+    "@commander-js/extra-typings": "^13.1.0",
+    "commander": "^13.1.0"
+  }
+}

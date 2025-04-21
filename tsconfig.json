@@ -1,6 +1,7 @@
 {
   "files": [],
   "references": [
+    { "path": "./packages/gyp-to-cmake/tsconfig.json" },
     { "path": "./packages/react-native-node-api-modules/tsconfig.json" }
   ]
 }

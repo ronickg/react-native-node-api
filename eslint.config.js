@@ -1,10 +1,12 @@
 // @ts-check
 
+import { globalIgnores } from "eslint/config";
 import globals from "globals";
 import eslint from '@eslint/js';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
+  globalIgnores(["**/dist/**/*"]),
   eslint.configs.recommended,
   tseslint.configs.recommended,
   {
@@ -26,6 +28,7 @@ export default tseslint.config(
   },
   {
     files: [
+      "packages/gyp-to-cmake/bin/*.js",
       "packages/react-native-node-api-modules/bin/*.mjs",
       "packages/react-native-node-api-modules/scripts/*.mjs"
     ],
