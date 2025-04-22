@@ -128,11 +128,11 @@ export function createFramework(libraryPath: string) {
   const newLibraryPath = path.join(frameworkPath, libraryName);
   fs.renameSync(libraryPath, newLibraryPath);
   // Update the name of the library
-  // cp.spawnSync("install_name_tool", [
-  //   "-id",
-  //   `@rpath/${libraryName}`,
-  //   newLibraryPath,
-  // ]);
+  cp.spawnSync("install_name_tool", [
+    "-id",
+    `@rpath/${libraryName}.framework/${libraryName}`,
+    newLibraryPath,
+  ]);
   return frameworkPath;
 }
 
@@ -161,6 +161,7 @@ export function createXCframework({
   );
   assert.equal(status, 0, "Failed to create xcframework");
   // Write a file to mark the xcframework is a Node-API module
+  // TODO: Consider including this in the Info.plist file instead
   fs.writeFileSync(
     path.join(outputPath, "react-native-node-api-module"),
     "",
