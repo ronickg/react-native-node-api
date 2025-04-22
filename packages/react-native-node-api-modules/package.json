@@ -13,9 +13,9 @@
       "types": "./dist/host/index.d.ts",
       "default": "./dist/host/index.js"
     },
-    "./metro-config": {
-      "types": "./dist/metro-config/index.d.ts",
-      "default": "./dist/metro-config/index.js"
+    "./metro-resolver": {
+      "types": "./dist/metro-resolver/index.d.ts",
+      "default": "./dist/metro-resolver/index.js"
     }
   },
   "scripts": {
