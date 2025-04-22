@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import cp from "node:child_process";
 import fs from "node:fs";
+import path from "node:path";
 
 import type { SupportedTriplet } from "./triplets.js";
 
@@ -108,11 +109,36 @@ export function getAppleBuildArgs() {
 
 type XCframeworkOptions = {
   libraryPaths: string[];
+  frameworkPaths: string[];
   outputPath: string;
 };
 
+export function createFramework(libraryPath: string) {
+  assert(fs.existsSync(libraryPath), `Library not found: ${libraryPath}`);
+  // Write a info.plist file to the framework
+  const libraryName = path.basename(libraryPath, path.extname(libraryPath));
+  const frameworkPath = path.join(
+    path.dirname(libraryPath),
+    `${libraryName}.framework`
+  );
+  // Create the framework from scratch
+  fs.rmSync(frameworkPath, { recursive: true, force: true });
+  fs.mkdirSync(frameworkPath);
+  fs.mkdirSync(path.join(frameworkPath, "Headers"));
+  const newLibraryPath = path.join(frameworkPath, libraryName);
+  fs.renameSync(libraryPath, newLibraryPath);
+  // Update the name of the library
+  // cp.spawnSync("install_name_tool", [
+  //   "-id",
+  //   `@rpath/${libraryName}`,
+  //   newLibraryPath,
+  // ]);
+  return frameworkPath;
+}
+
 export function createXCframework({
   libraryPaths,
+  frameworkPaths,
   outputPath,
 }: XCframeworkOptions) {
   // Delete any existing xcframework to prevent the error:
@@ -124,7 +150,8 @@ export function createXCframework({
     "xcodebuild",
     [
       "-create-xcframework",
-      ...libraryPaths.flatMap((libraryPath) => ["-library", libraryPath]),
+      ...libraryPaths.flatMap((p) => ["-library", p]),
+      ...frameworkPaths.flatMap((p) => ["-framework", p]),
       "-output",
       outputPath,
     ],
@@ -133,4 +160,27 @@ export function createXCframework({
     }
   );
   assert.equal(status, 0, "Failed to create xcframework");
+  // Write a file to mark the xcframework is a Node-API module
+  fs.writeFileSync(
+    path.join(outputPath, "react-native-node-api-module"),
+    "",
+    "utf8"
+  );
+}
+
+/**
+ * Determine the filename of the xcframework based on the framework paths.
+ * Ensuring that all framework paths have the same base name.
+ */
+export function determineXCFrameworkFilename(frameworkPaths: string[]) {
+  const frameworkNames = frameworkPaths.map((p) =>
+    path.basename(p, path.extname(p))
+  );
+  const candidates = new Set<string>(frameworkNames);
+  assert(
+    candidates.size === 1,
+    "Expected all frameworks to have the same name"
+  );
+  const [name] = candidates;
+  return `${name}.xcframework`;
 }

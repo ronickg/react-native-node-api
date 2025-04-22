@@ -7,11 +7,13 @@ import { Command, Option } from "@commander-js/extra-typings";
 import { SUPPORTED_TRIPLETS, SupportedTriplet } from "./triplets.js";
 import { getNodeApiHeadersPath, getNodeAddonHeadersPath } from "./headers.js";
 import {
+  createFramework,
   createXCframework,
-  isAppleTriplet,
-  getAppleConfigureCmakeArgs,
-  getAppleBuildArgs,
   DEFAULT_APPLE_TRIPLETS,
+  determineXCFrameworkFilename,
+  getAppleBuildArgs,
+  getAppleConfigureCmakeArgs,
+  isAppleTriplet,
 } from "./apple.js";
 
 // TODO: Add automatic ccache support
@@ -123,14 +125,17 @@ export const program = new Command("react-native-node-api-cmake")
           }
         });
       });
+      const frameworkPaths = libraryPaths.map(createFramework);
+      const xcframeworkFilename = determineXCFrameworkFilename(frameworkPaths);
       // Create the xcframework
       createXCframework({
         outputPath: path.join(
           // Defaults to storing the xcframework next to the CMakeLists.txt file
           globalOptions.out || globalOptions.source,
-          "node-api.xcframework"
+          xcframeworkFilename
         ),
-        libraryPaths,
+        libraryPaths: [],
+        frameworkPaths,
       });
     }
   });
