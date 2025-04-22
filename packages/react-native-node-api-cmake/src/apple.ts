@@ -82,6 +82,21 @@ export function getAppleSDKPath(triplet: AppleTriplet) {
     .stdout.trim();
 }
 
+export function createPlistContent(values: Record<string, string>) {
+  return [
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">',
+    '<plist version="1.0">',
+    "<dict>",
+    ...Object.entries(values).flatMap(([key, value]) => [
+      `<key>${key}</key>`,
+      `<string>${value}</string>`,
+    ]),
+    "</dict>",
+    "</plist>",
+  ].join("\n");
+}
+
 export function getAppleConfigureCmakeArgs(triplet: AppleTriplet) {
   assert(isAppleTriplet(triplet));
   const sdkPath = getAppleSDKPath(triplet);
@@ -125,6 +140,22 @@ export function createFramework(libraryPath: string) {
   fs.rmSync(frameworkPath, { recursive: true, force: true });
   fs.mkdirSync(frameworkPath);
   fs.mkdirSync(path.join(frameworkPath, "Headers"));
+  // Create an empty Info.plist file
+  fs.writeFileSync(
+    path.join(frameworkPath, "Info.plist"),
+    createPlistContent({
+      CFBundleDevelopmentRegion: "en",
+      CFBundleExecutable: libraryName,
+      CFBundleIdentifier: `com.callstackincubator.node-api.${libraryName}`,
+      CFBundleInfoDictionaryVersion: "6.0",
+      CFBundleName: libraryName,
+      CFBundlePackageType: "FMWK",
+      CFBundleShortVersionString: "1.0",
+      CFBundleVersion: "1",
+      NSPrincipalClass: "",
+    }),
+    "utf8"
+  );
   const newLibraryPath = path.join(frameworkPath, libraryName);
   fs.renameSync(libraryPath, newLibraryPath);
   // Update the name of the library
