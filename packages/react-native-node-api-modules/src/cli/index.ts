@@ -115,13 +115,13 @@ program
     fs.mkdirSync(outputPath, { recursive: true });
     // Create symbolic links for each xcframework found in dependencies
     const linkedXcframeworkPaths = Object.entries(dependenciesByName).flatMap(
-      ([name, dependency]) => {
+      ([, dependency]) => {
         return dependency.xcframeworkPaths.map((xcframeworkPath) => {
           const fromPath = path.join(dependency.path, xcframeworkPath);
-          const linkedPath = path.join(outputPath, name, xcframeworkPath);
-          fs.mkdirSync(path.dirname(linkedPath), { recursive: true });
-          fs.symlinkSync(fromPath, linkedPath, "dir");
-          return linkedPath;
+          const toPath = path.join(outputPath, path.basename(xcframeworkPath));
+          // TODO: Handle collisions
+          fs.symlinkSync(fromPath, toPath, "dir");
+          return toPath;
         });
       }
     );
