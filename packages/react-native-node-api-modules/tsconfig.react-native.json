@@ -8,5 +8,5 @@
     "rootDir": "src",
     "types": ["react-native"]
   },
-  "include": ["src/host"]
+  "include": ["src/host", "src/bindings-polyfill"]
 }

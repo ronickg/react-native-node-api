@@ -16,6 +16,10 @@
     "./metro-resolver": {
       "types": "./dist/metro-resolver/index.d.ts",
       "default": "./dist/metro-resolver/index.js"
+    },
+    "./bindings-polyfill": {
+      "types": "./dist/bindings-polyfill/index.d.ts",
+      "default": "./dist/bindings-polyfill/index.js"
     }
   },
   "scripts": {
