@@ -6,7 +6,7 @@
   "main": "dist/host/index.js",
   "type": "commonjs",
   "bin": {
-    "react-native-node-api-modules": "./bin/react-native-node-api-modules.js"
+    "react-native-node-api-modules": "./bin/react-native-node-api-modules.mjs"
   },
   "exports": {
     ".": {
@@ -52,6 +52,10 @@
     }
   ],
   "license": "MIT",
+  "dependencies": {
+    "@commander-js/extra-typings": "^13.1.0",
+    "commander": "^13.1.0"
+  },
   "devDependencies": {
     "metro-config": "0.81.1",
     "node-api-headers": "^1.5.0"
