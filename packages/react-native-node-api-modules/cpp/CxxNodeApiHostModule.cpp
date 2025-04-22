@@ -19,6 +19,7 @@ CxxNodeApiHostModule::requireNodeAddon(jsi::Runtime &rt,
   if (1 == count && args[0].isString()) {
     return thisModule.requireNodeAddon(rt, args[0].asString(rt));
   }
+  // TODO: Throw a meaningful error
   return jsi::Value::undefined();
 }
 
@@ -26,9 +27,9 @@ jsi::Value CxxNodeApiHostModule::requireNodeAddon(jsi::Runtime &rt,
                                                   const jsi::String path) {
   const std::string pathStr = path.utf8(rt);
 
-  auto [it, inserted] = nodeAddons_.emplace(pathStr);
+  auto [it, inserted] = nodeAddons_.emplace(pathStr, NodeAddon());
   NodeAddon &addon = it->second;
-  
+
   // Check if this module has been loaded already, if not then load it...
   if (inserted) {
     if (!loadNodeAddon(addon, pathStr)) {
