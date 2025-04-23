@@ -3,28 +3,19 @@
   "version": "0.1.0",
   "description": "Node-API Modules for React Native",
   "homepage": "https://github.com/callstackincubator/react-native-node-api-modules#readme",
-  "main": "dist/host/index.js",
+  "main": "dist/react-native/index.js",
   "type": "commonjs",
   "bin": {
     "react-native-node-api-modules": "./bin/react-native-node-api-modules.mjs"
   },
   "exports": {
-    ".": {
-      "types": "./dist/host/index.d.ts",
-      "default": "./dist/host/index.js"
-    },
-    "./metro-resolver": {
-      "types": "./dist/metro-resolver/index.d.ts",
-      "default": "./dist/metro-resolver/index.js"
-    },
-    "./bindings-polyfill": {
-      "types": "./dist/bindings-polyfill/index.d.ts",
-      "default": "./dist/bindings-polyfill/index.js"
-    }
+    ".": "./dist/react-native/index.js",
+    "./babel-plugin": "./dist/node/babel-plugin/index.js"
   },
   "scripts": {
     "build": "tsc --build",
-    "copy-node-api-headers": "node scripts/copy-node-api-headers.mjs"
+    "copy-node-api-headers": "node scripts/copy-node-api-headers.mjs",
+    "test": "tsx --test src/**/*.test.ts"
   },
   "keywords": [
     "react-native",
@@ -57,16 +48,19 @@
     "commander": "^13.1.0"
   },
   "devDependencies": {
+    "@babel/core": "^7.26.10",
+    "@babel/types": "^7.27.0",
     "metro-config": "0.81.1",
     "node-api-headers": "^1.5.0"
   },
   "peerDependencies": {
+    "@babel/core": "^7.26.10",
     "react-native": "0.79.1"
   },
   "codegenConfig": {
     "name": "NodeApiHostSpec",
     "type": "modules",
-    "jsSrcsDir": "src/host",
+    "jsSrcsDir": "src/react-native",
     "outputDir": {
       "ios": "ios/generated",
       "android": "android/generated"
