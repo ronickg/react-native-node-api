@@ -6,9 +6,11 @@ require_relative "./scripts/patch-hermes"
 require_relative "./scripts/find-node-api-xcframeworks"
 
 # Crawl directories for node-api xcframeworks
+# TODO: Make sure this only happens initially and in a post-build step
 node_api_xcframework_paths = find_node_api_xcframeworks(Pod::Config.instance.installation_root, __dir__);
 Pod::UI.puts "Found Node-API modules:"
 node_api_xcframework_paths.each do |path|
+  # TODO: Print the original path as well
   Pod::UI.puts "→ #{path}"
 end
 
