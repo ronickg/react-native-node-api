@@ -11,3 +11,6 @@ Pods/
 build/
 local.properties
 msbuild.binlog
+
+# Ignoring the Podfile.lock as the `react-native-node-api-modules` hash updates too frequently
+Podfile.lock
