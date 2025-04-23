@@ -6,7 +6,10 @@ import eslint from '@eslint/js';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  globalIgnores(["**/dist/**/*"]),
+  globalIgnores(["**/dist/**"]),
+  globalIgnores(["apps/test-app/ios/**"]),
+  globalIgnores(["packages/react-native-node-api-modules/hermes/**"]),
+  globalIgnores(["packages/node-addon-examples/examples/**"]),
   eslint.configs.recommended,
   tseslint.configs.recommended,
   {

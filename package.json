@@ -10,7 +10,8 @@
   "homepage": "https://github.com/callstackincubator/react-native-node-api-modules#readme",
   "scripts": {
     "build": "tsc --build",
-    "dev": "tsc --build --watch"
+    "dev": "tsc --build --watch",
+    "lint": "eslint ."
   },
   "author": {
     "name": "Callstack",
