@@ -7,9 +7,6 @@ import moduleInitCmd from './module/commands/init.js';
 import moduleBuildCmd from './module/commands/build.js';
 import moduleTargetsCmd from './module/commands/targets.js';
 
-import process from 'node:process';             // HACK: XXX: Temporary workaround for development
-process.chdir('../../packages/example-cpp-node-api-addon'); // HACK: XXX: Temporary workaround for development
-
 const program = new Command()
   .name('react-native-node-api-cli')
   .description('Generates React Native Modules from Node-API addons')

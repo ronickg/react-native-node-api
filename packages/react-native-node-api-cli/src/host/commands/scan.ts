@@ -23,8 +23,6 @@ const command = new Command('scan')
   .addOption(new Option('-u, --update', 'Automatically update configuration file'))
   .addOption(new Option('-a, --all', 'Add all found modules (without asking)'))
   .action(async (_options: Options) => {
-    process.chdir('../../apps/example-rnta'); // HACK
-
     // Find project root and read its `./package.json`
     const projectRoot = await findProjectRoot();
     consola.log(`Found project at ${chalk.dim(projectRoot)}`);

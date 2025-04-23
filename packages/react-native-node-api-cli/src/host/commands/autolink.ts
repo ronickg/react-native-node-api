@@ -14,8 +14,6 @@ const command = new Command('autolink')
   .description('TODO')
   .addOption(new Option('-v, --verbose', 'Enable verbose output'))
   .action(async (_options: Options) => {
-    process.chdir('../../apps/example-rnta'); // HACK
-
     // Find project root and read its `./napi-host.config.json`
     const projectRoot = await findProjectRoot();
     consola.info(`Found project at ${chalk.dim(projectRoot)}`);

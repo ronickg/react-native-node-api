@@ -24,8 +24,6 @@ const command = new Command('init-host')
   .description('Initializes existing React Native app to host NodeAPI modules')
   .addOption(new Option('-v, --verbose', 'Enable verbose output'))
   .action(async (_options: Options) => {
-    process.chdir('../../apps/example-rnta'); // HACK
-
     // Find project root and read its `./package.json`
     const projectRoot = await findProjectRoot();
     consola.info(`Found project at ${chalk.dim(projectRoot)}`);
