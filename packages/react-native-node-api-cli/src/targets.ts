@@ -33,6 +33,12 @@ export interface TargetDescription {
   apple?: TargetDescriptionApple;
 }
 
+export const DEFAULT_TARGET_TRIPLES = [
+  'x86_64-apple-darwin',
+  'x86_64-unknown-linux-gnu',
+  'x86_64-pc-windows-msvc',
+];
+
 export const SUPPORTED_TARGETS: {[triple: string]: TargetDescription} = {
   // Apple
   "aarch64-apple-darwin": {
@@ -106,6 +112,13 @@ export const SUPPORTED_TARGETS: {[triple: string]: TargetDescription} = {
   },
 };
 
+/**
+ * Attempts to guess the supported target platforms based on the provided package.json file.
+ * This method identifies platforms by examining dependencies, peer dependencies, and engine definitions from the package.json content.
+ *
+ * @param {PackageJson} pkg The package.json data used to derive the target platforms.
+ * @return {(keyof typeof SUPPORTED_TARGETS)[]} An array of guessed target platform keys corresponding to supported platforms.
+ */
 export function guessTargetsFromPackageJson(pkg: PackageJson): (keyof typeof SUPPORTED_TARGETS)[]
 {
   let guessedOs: (TargetOS | TargetOSExtra)[] = [];

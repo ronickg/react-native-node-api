@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
 import consola from 'consola';
-import type { GypFile } from './types.js';
+import type { GypFile } from '../types.js';
 
 function indent(size: number = 2, character: string = ' ') {
   return (t: string) => character.repeat(size) + t;
@@ -87,7 +87,7 @@ export async function convertGypToCmakeJs(gypFilePath: string, projectName: stri
       cmakeSrc.push(
         `target_include_directories(${targetName} PRIVATE`,
           ...[
-            '${CMAKE_JS_SRC}',
+            '${CMAKE_JS_INC}',
             ...includeDirs,
           ].map(indent()),
         ')',
@@ -109,7 +109,7 @@ export async function convertGypToCmakeJs(gypFilePath: string, projectName: stri
       'endif()',
     );
 
-    return cmakeSrc.join('\n');
+    return cmakeSrc.join('\n') + '\n';
   }
   catch (err) {
     consola.error(`Failed to load ${gypFilePath} file: ${err}`);
