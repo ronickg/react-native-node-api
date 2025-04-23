@@ -6,7 +6,10 @@ import crypto from "node:crypto";
 export function isNodeApiModule(modulePath: string): boolean {
   // Determine if we're trying to load a Node-API module
   // Strip optional .node extension
-  const candidateBasePath = stripExtension(modulePath);
+  const candidateBasePath = path.resolve(
+    path.dirname(modulePath),
+    path.basename(modulePath, ".node")
+  );
   return [
     candidateBasePath + ".xcframework",
     // TODO: Add Android support

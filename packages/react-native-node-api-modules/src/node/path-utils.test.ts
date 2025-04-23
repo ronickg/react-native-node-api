@@ -11,14 +11,14 @@ import {
 import { setupTempDirectory } from "./test-utils.js";
 
 describe("isNodeApiModule", () => {
-  it("returns true for xcframework", (context) => {
+  it("returns true for .node", (context) => {
     const tempDirectoryPath = setupTempDirectory(context, {
       "addon.xcframework/addon.node":
         "// This is supposted to be a binary file",
     });
 
     assert(isNodeApiModule(path.join(tempDirectoryPath, "addon")));
-    assert(isNodeApiModule(path.join(tempDirectoryPath, "addon.xcframework")));
+    assert(isNodeApiModule(path.join(tempDirectoryPath, "addon.node")));
   });
 });
 
