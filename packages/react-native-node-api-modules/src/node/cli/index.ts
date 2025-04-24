@@ -129,46 +129,40 @@ export function rebuildXcframeworkHashed(modulePath: string) {
                   tripletPath,
                   frameworkEntry.name
                 );
-                const oldLibraryName = path.basename(
+                const libraryName = path.basename(
                   frameworkEntry.name,
                   ".framework"
                 );
-                const oldLibraryPath = path.join(frameworkPath, oldLibraryName);
-                const newLibraryName = `node-api-${hash}`;
-                const newFrameworkPath = path.join(
-                  tripletPath,
-                  `${newLibraryName}.framework`
-                );
-                const newLibraryPath = path.join(
-                  newFrameworkPath,
-                  newLibraryName
-                );
+
+                console.log({ libraryName });
+
+                // Find the library inside the framework
+                const oldLibraryPath = path.join(frameworkPath, libraryName);
                 assert(
                   fs.existsSync(oldLibraryPath),
                   `Expected a library at '${oldLibraryPath}'`
                 );
-                // Rename the library
-                fs.renameSync(
-                  oldLibraryPath,
-                  // Cannot use newLibraryPath here, because the framework isn't renamed yet
-                  path.join(frameworkPath, `node-api-${hash}`)
+
+                const newFrameworkName = `node-api-${hash}.framework`;
+                const newFrameworkPath = path.join(
+                  tripletPath,
+                  newFrameworkName
                 );
-                // Rename the framework
+                const newLibraryPath = path.join(newFrameworkPath, libraryName);
+                // Rename the framework and assert the library in the new location
                 fs.renameSync(frameworkPath, newFrameworkPath);
-                // Expect the library in the new location
-                assert(fs.existsSync(newLibraryPath));
+                assert(
+                  fs.existsSync(newLibraryPath),
+                  `Expected a library at '${newLibraryPath}'`
+                );
                 // Update the binary
-                cp.spawnSync("install_name_tool", [
+                const { status } = cp.spawnSync("install_name_tool", [
                   "-id",
-                  `@rpath/${newLibraryName}.framework/${newLibraryName}`,
+                  `@rpath/${newFrameworkName}/${libraryName}`,
                   newLibraryPath,
                 ]);
-                // Update the Info.plist file for the framework
-                updateInfoPlist({
-                  filePath: path.join(newFrameworkPath, "Info.plist"),
-                  oldLibraryName,
-                  newLibraryName,
-                });
+                assert.equal(status, 0, "Failed to update library id");
+
                 return newFrameworkPath;
               } else {
                 return [];
@@ -180,7 +174,7 @@ export function rebuildXcframeworkHashed(modulePath: string) {
       });
 
     // Create a new xcframework from the renamed frameworks
-    cp.spawnSync("xcodebuild", [
+    const { status } = cp.spawnSync("xcodebuild", [
       "-create-xcframework",
       ...frameworkPaths.flatMap((frameworkPath) => [
         "-framework",
@@ -189,10 +183,11 @@ export function rebuildXcframeworkHashed(modulePath: string) {
       "-output",
       outputPath,
     ]);
+    assert.equal(status, 0, "Failed to create xcframework");
 
     return outputPath;
   } finally {
-    fs.rmSync(tempPath, { recursive: true, force: true });
+    // fs.rmSync(tempPath, { recursive: true, force: true });
   }
 }
 
