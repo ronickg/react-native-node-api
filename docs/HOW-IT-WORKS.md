@@ -1,4 +1,3 @@
-
 # How it works
 
 This document will outline what happens throughout the various parts of the system, when the app calls the `add` method on the library introduced in the ["usage" document](./USAGE.md).
@@ -8,49 +7,50 @@ This document will outline what happens throughout the various parts of the syst
 Everything starts from the consuming app importing the `calculator-lib`.
 Metro handles the resolution and the `calculator-lib`'s entrypoint is added to the JavaScript-bundle when bundling.
 
-## `calculator-lib` does `require("./prebuild.node")`, the bundler resolves `./prebuild.node` and we generate JavaScript to load it
+## `calculator-lib` does `require("./prebuild.node")` which is transformed into a call into the host TurboModule
 
-The library has a require call to a `.node` file, which would normally not have any special meaning, but because the app developer has added the `resolveRequest` function from the `react-native-node-api-modules/metro-config`, the resolution gets intercepted when the app is being bundled by Metro and resolved by the `react-native-node-api-modules` package.
-
-> [!NOTE]  
-> While this flow is supported through Metro only, we want to generalize and support multiple alternative bundlers too.
-
-The generated code is platform specific and looks something like this:
+The library has a require call to a `.node` file, which would normally not have any special meaning:
 
 ```javascript
-// When resolving with `platform === "ios"`
-import { loadModuleOnApple } from "react-native-node-api-modules";
-export default loadModuleOnApple({
-  xcframeworkPath: "../../prebuild.node.xcframework",
-  frameworkName: "MyAddon.framework",
-  dylibName: "MyAddon",
-});
+module.exports = require("./prebuild.node");
 ```
+
+Since the app developer has added the `react-native-node-api-modules/babel-plugin` to their Babel configuration, the require statement gets transformed when the app is being bundled by Metro, into a `requireNodeAddon` call on our TurboModule.
+
+The generated code looks something like this:
 
 ```javascript
-// When resolving with `platform === "android"`
-import { loadModuleOnAndroid } from "react-native-node-api-modules";
-export default loadModuleOnAndroid({
-  libsPath: "../../prebuild.node.android",
-  soName: "my-addon.so",
-});
+module.exports = require("react-native-node-api-modules").requireNodeAddon(
+  "node-api-2e9fc79b.framework/node-api-2e9fc79b"
+);
 ```
 
-<!-- The exact shape and location of this generated code is TDB -->
+> [!NOTE]
+> In the time of writing, this code only supports iOS as passes the path to the library with its .framework.
+> We plan on generalizing this soon 🤞
 
-## Generated code calls into `react-native-node-api-modules`, which loads the platform specific dynamic library
+### A note on the need for path-hashing
 
-The native implementation of `loadModuleOnApple` and `loadModuleOnAndroid` is responsible for loading the dynamic library and allow the Node-API module to register its initialization function, either by exporting a `napi_register_module_v1` function or by calling the (deprecated) `napi_module_register` function.
-In any case the native code stores the initialization function in a static data-structure.
+Notice that the `requireNodeAddon` call doesn't reference the library by it's original name (`prebuild.node`) but instead a name containing a hash.
+
+In Node.js dynamic libraries sharing names can be disambiguated based off their path on disk. Dynamic libraries added to an iOS application are essentially hoisted and occupy a shared global namespace. This leads to collisions and makes it impossible to disambiguate multiple libraries sharing the same name. We need a way to map a require call, referencing the library by its path relative to the JS file, into a unique name of the library once it's added into the application.
+
+To work around this issue, we scan for and copy any library (including its entire xcframework structure with nested framework directories) from the dependency package into our host package when the app builds and reference these from its podspec (as vendored_frameworks). We use a special file in the xcframeworks containing Node-API modules. To avoid collisions we rename xcframework, framework and library files to a unique name, containing a hash. The hash is computed based off the package-name of the containing package and the relative path from the package root to the library file (with any platform specific file extensions replaced with the neutral ".node" extension).
+
+## Transformed code calls into `react-native-node-api-modules`, loading the platform specific dynamic library
+
+The native implementation of `requireNodeAddon` is responsible for loading the dynamic library and allow the Node-API module to register its initialization function, either by exporting a `napi_register_module_v1` function or by calling the (deprecated) `napi_module_register` function.
+
+In any case the native code stores the initialization function in a data-structure.
 
 ## `react-native-node-api-modules` creates a `node_env` and initialize the Node-API module
 
-The initialization function of a Node-API module expects a `node_env`.
-If we don't have one for the current `jsi::Runtime` already, one is created, by calling `createNodeApiEnv` on the `jsi::Runtime`.
+The initialization function of a Node-API module expects a `node_env`, which we create by calling `createNodeApiEnv` on the `jsi::Runtime`.
 
 ## The library's C++ code initialize the `exports` object
 
 An `exports` object is created for the Node-API module and both the `napi_env` and `exports` object is passed to the Node-API module's initialization function and the third party code is able to call the Node-API free functions:
+
 - The engine-specific functions (see [js_native_api.h](https://github.com/nodejs/node/blob/main/src/js_native_api.h)) are implemented by the `jsi::Runtime` (currently only Hermes supports this).
 - The runtime-specific functions (see [node_api.h](https://github.com/nodejs/node/blob/main/src/node_api.h)) are implemented by `react-native-node-api-modules`.
 
