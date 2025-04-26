@@ -4,6 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 import type { SupportedTriplet } from "./triplets.js";
+import { spawn } from "bufout";
 
 export const APPLE_TRIPLETS = [
   "arm64;x86_64-apple-darwin",
@@ -123,7 +124,6 @@ export function getAppleBuildArgs() {
 }
 
 type XCframeworkOptions = {
-  libraryPaths: string[];
   frameworkPaths: string[];
   outputPath: string;
 };
@@ -168,8 +168,7 @@ export function createFramework(libraryPath: string) {
   return frameworkPath;
 }
 
-export function createXCframework({
-  libraryPaths,
+export async function createXCframework({
   frameworkPaths,
   outputPath,
 }: XCframeworkOptions) {
@@ -178,20 +177,18 @@ export function createXCframework({
   // Ideally, it would only be necessary to delete the specific platform+arch, to allow selectively building from source.
   fs.rmSync(outputPath, { recursive: true, force: true });
 
-  const { status } = cp.spawnSync(
+  await spawn(
     "xcodebuild",
     [
       "-create-xcframework",
-      ...libraryPaths.flatMap((p) => ["-library", p]),
       ...frameworkPaths.flatMap((p) => ["-framework", p]),
       "-output",
       outputPath,
     ],
     {
-      stdio: "inherit",
+      outputMode: "buffered",
     }
   );
-  assert.equal(status, 0, "Failed to create xcframework");
   // Write a file to mark the xcframework is a Node-API module
   // TODO: Consider including this in the Info.plist file instead
   fs.writeFileSync(
