@@ -159,11 +159,12 @@ export function createFramework(libraryPath: string) {
   const newLibraryPath = path.join(frameworkPath, libraryName);
   fs.renameSync(libraryPath, newLibraryPath);
   // Update the name of the library
-  cp.spawnSync("install_name_tool", [
-    "-id",
-    `@rpath/${libraryName}.framework/${libraryName}`,
-    newLibraryPath,
-  ]);
+  // Leaving this out for now, since it will be renamed when copied anyway
+  // cp.spawnSync("install_name_tool", [
+  //   "-id",
+  //   `@rpath/${libraryName}.framework/${libraryName}`,
+  //   newLibraryPath,
+  // ]);
   return frameworkPath;
 }
 

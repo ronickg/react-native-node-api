@@ -3,13 +3,17 @@ require "json"
 package = JSON.parse(File.read(File.join(__dir__, "package.json")))
 
 require_relative "./scripts/patch-hermes"
-require_relative "./scripts/find-node-api-xcframeworks"
 
-# Crawl directories for node-api xcframeworks
-node_api_xcframework_paths = find_node_api_xcframeworks(Pod::Config.instance.installation_root, __dir__);
-Pod::UI.puts "Found node-api.xcframeworks:"
-node_api_xcframework_paths.each do |path|
-  Pod::UI.puts "→ #{path}"
+NODE_PATH ||= `which node`.strip
+CLI_COMMAND ||= "'#{NODE_PATH}' '#{File.join(__dir__, "dist/node/cli/run.js")}'"
+COPY_FRAMEWORKS_COMMAND ||= "#{CLI_COMMAND} copy-xcframeworks '#{Pod::Config.instance.installation_root}'"
+
+# We need to run this now to ensure the xcframeworks are copied vendored_frameworks are considered
+XCFRAMEWORKS_DIR ||= File.join(__dir__, "xcframeworks")
+unless defined?(@xcframeworks_copied)
+  system(COPY_FRAMEWORKS_COMMAND) or raise "Failed to copy xcframeworks"
+  # Setting a flag to avoid running this command on every require
+  @xcframeworks_copied = true
 end
 
 Pod::Spec.new do |s|
@@ -26,7 +30,15 @@ Pod::Spec.new do |s|
   s.source_files = "ios/**/*.{h,m,mm}", "cpp/**/*.{hpp,cpp,c,h}", "include/*.h"
   s.public_header_files = "include/*.h"
 
-  s.vendored_frameworks = node_api_xcframework_paths
+  s.vendored_frameworks = "xcframeworks/*.xcframework"
+  s.script_phase = {
+    :name => 'Copy Node-API xcframeworks',
+    :execution_position => :before_compile,
+    :script => <<-CMD
+      set -e
+      #{COPY_FRAMEWORKS_COMMAND}
+    CMD
+  }
 
   # Use install_modules_dependencies helper to install the dependencies if React Native version >=0.71.0.
   # See https://github.com/facebook/react-native/blob/febf6b7f33fdb4904669f99d795eba4c0f95d7bf/scripts/cocoapods/new_architecture.rb#L79.

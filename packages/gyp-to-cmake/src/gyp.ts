@@ -73,6 +73,7 @@ export function readBindingFile(
 ): GypBinding {
   try {
     const contents = fs.readFileSync(path, "utf-8");
+    // TODO: Use a loose json parser to allow single quotes (and comments)
     const json = JSON.parse(contents);
     assertBinding(json, disallowUnknownProperties);
     return json;
