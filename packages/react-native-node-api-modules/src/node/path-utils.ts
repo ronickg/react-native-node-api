@@ -1,3 +1,4 @@
+import assert from "node:assert/strict";
 import path from "node:path";
 import fs from "node:fs";
 import crypto from "node:crypto";
@@ -37,13 +38,54 @@ export function replaceWithNodeExtension(modulePath: string) {
   });
 }
 
+export type ModuleContext = {
+  packageName: string;
+  relativePath: string;
+};
+
+/**
+ * Traverse the filesystem upward to find a name for the package that which contains a file.
+ */
+export function determineModuleContext(
+  modulePath: string,
+  originalPath = modulePath
+): ModuleContext {
+  const candidatePackageJsonPath = path.join(modulePath, "package.json");
+  const parentDirectoryPath = path.dirname(modulePath);
+  if (fs.existsSync(candidatePackageJsonPath)) {
+    const packageJsonContent = fs.readFileSync(
+      candidatePackageJsonPath,
+      "utf8"
+    );
+    const packageJson = JSON.parse(packageJsonContent) as unknown;
+    assert(
+      typeof packageJson === "object" && packageJson !== null,
+      "Expected package.json to be an object"
+    );
+    assert(
+      "name" in packageJson && typeof packageJson.name === "string",
+      "Expected package.json to have a name"
+    );
+    return {
+      packageName: packageJson.name,
+      relativePath: path.relative(modulePath, originalPath),
+    };
+  } else if (parentDirectoryPath === modulePath) {
+    // We've reached the root of the filesystem
+    throw new Error("Could not find containing package");
+  } else {
+    return determineModuleContext(parentDirectoryPath, originalPath);
+  }
+}
+
 export function hashNodeApiModulePath(modulePath: string) {
   // Transforming platform specific paths to a common path
   if (path.extname(modulePath) !== ".node") {
     return hashNodeApiModulePath(replaceWithNodeExtension(modulePath));
   }
+  const { packageName, relativePath } = determineModuleContext(modulePath);
   const hash = crypto.createHash("sha256");
-  hash.update(path.normalize(modulePath));
+  hash.update(path.resolve(packageName, relativePath));
   const result = hash.digest("hex").slice(0, 8);
   return result;
 }

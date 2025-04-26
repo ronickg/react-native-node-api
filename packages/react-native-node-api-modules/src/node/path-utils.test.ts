@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import path from "node:path";
 
 import {
+  determineModuleContext,
   isNodeApiModule,
   replaceWithNodeExtension,
   stripExtension,
@@ -51,5 +52,30 @@ describe("isNodeApiModule", () => {
       true
     );
     assert.equal(isNodeApiModule(path.join(tempDirectoryPath, "nope")), false);
+  });
+});
+
+describe("determineModuleContext", () => {
+  it("works", (context) => {
+    const tempDirectoryPath = setupTempDirectory(context, {
+      "package.json": `{ "name": "my-package" }`,
+      "sub-package/package.json": `{ "name": "my-sub-package" }`,
+    });
+
+    {
+      const { packageName, relativePath } = determineModuleContext(
+        path.join(tempDirectoryPath, "some-dir/some-file.js")
+      );
+      assert.equal(packageName, "my-package");
+      assert.equal(relativePath, "some-dir/some-file.js");
+    }
+
+    {
+      const { packageName, relativePath } = determineModuleContext(
+        path.join(tempDirectoryPath, "sub-package/some-file.js")
+      );
+      assert.equal(packageName, "my-sub-package");
+      assert.equal(relativePath, "some-file.js");
+    }
   });
 });

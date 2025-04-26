@@ -6,6 +6,7 @@ import { transformFileSync } from "@babel/core";
 
 import { plugin } from "./plugin.js";
 import { setupTempDirectory } from "../test-utils.js";
+import { getNodeApiRequireCallArgument } from "../path-utils.js";
 
 describe("plugin", () => {
   it("transforms require calls, regardless", (context) => {
@@ -37,10 +38,12 @@ describe("plugin", () => {
       `,
     });
 
-    const ADDON_1_REQUIRE_ARG =
-      "@rpath/node-api-eb5c6d4b.framework/node-api-eb5c6d4b";
-    const ADDON_2_REQUIRE_ARG =
-      "@rpath/node-api-6c4e5fed.framework/node-api-6c4e5fed";
+    const ADDON_1_REQUIRE_ARG = getNodeApiRequireCallArgument(
+      path.join(tempDirectoryPath, "addon-1")
+    );
+    const ADDON_2_REQUIRE_ARG = getNodeApiRequireCallArgument(
+      path.join(tempDirectoryPath, "addon-2")
+    );
 
     {
       const result = transformFileSync(
