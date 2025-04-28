@@ -16,8 +16,7 @@ export default tseslint.config(
     files: [
       "apps/test-app/*.js",
       "packages/node-addon-examples/*.js",
-      "packages/react-native-node-api-modules/metro-resolver.js",
-      "packages/react-native-node-api-modules/bindings-polyfill.js",
+      "packages/react-native-node-api-modules/babel-plugin.js",
     ],
     languageOptions: {
       parserOptions: {
