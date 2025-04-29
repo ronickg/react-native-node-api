@@ -1,11 +1,14 @@
 import assert from "node:assert/strict";
 import path from "node:path";
-import fs from "node:fs";
+import fs from "node:fs/promises";
+import { readdirSync, existsSync, statSync } from "node:fs";
 import { createRequire } from "node:module";
 
 import { spawn } from "bufout";
+import { packageDirectorySync } from "pkg-dir";
+import { readPackageSync } from "read-pkg";
 
-import { hashNodeApiModulePath } from "../path-utils.js";
+import { hashModulePath } from "../path-utils.js";
 
 // Must be in all xcframeworks to be considered as Node-API modules
 export const MAGIC_FILENAME = "react-native-node-api-module";
@@ -13,12 +16,26 @@ export const XCFRAMEWORKS_PATH = path.resolve(
   __dirname,
   "../../../xcframeworks"
 );
+export const DEFAULT_EXCLUDE_PATTERNS = [/\/node_modules\//, /\/.git\//];
+
+export function resolvePackageRoot(
+  requireFromPackageRoot: NodeJS.Require,
+  packageName: string
+): string | undefined {
+  try {
+    const resolvedPath = requireFromPackageRoot.resolve(packageName);
+    return packageDirectorySync({ cwd: resolvedPath });
+  } catch {
+    // TODO: Add a debug log here
+    return undefined;
+  }
+}
 
 /**
  * Get the latest modification time of all files in a directory and its subdirectories.
  */
 function getLatestMtime(dir: string): number {
-  const entries = fs.readdirSync(dir, {
+  const entries = readdirSync(dir, {
     withFileTypes: true,
     recursive: true,
   });
@@ -28,7 +45,7 @@ function getLatestMtime(dir: string): number {
   for (const entry of entries) {
     if (entry.isFile()) {
       const fullPath = path.join(entry.parentPath, entry.name);
-      const stat = fs.statSync(fullPath);
+      const stat = statSync(fullPath);
       if (stat.mtimeMs > latest) {
         latest = stat.mtimeMs;
       }
@@ -45,69 +62,92 @@ function getLatestMtime(dir: string): number {
 export function findPackageDependencyPaths(
   from: string
 ): Record<string, string> {
-  const candidatePath = path.join(from, "package.json");
-  const parentDir = path.dirname(from);
-  if (fs.existsSync(candidatePath)) {
-    const require = createRequire(from);
-    const contents = fs.readFileSync(candidatePath, "utf-8");
-    const json = JSON.parse(contents) as unknown;
-    // Assert the package.json has the expected structure
-    assert(
-      typeof json === "object" && json !== null,
-      "Expected package.json to be an object"
-    );
-    if (
-      "dependencies" in json &&
-      typeof json.dependencies === "object" &&
-      json.dependencies !== null
-    ) {
-      return Object.fromEntries(
-        Object.keys(json.dependencies)
-          .map((dependencyName) => {
-            try {
-              return [
-                dependencyName,
-                path.dirname(
-                  require.resolve(`${dependencyName}/package.json`, {
-                    paths: [from],
-                  })
-                ),
-              ];
-            } catch {
-              return undefined;
-            }
-          })
-          .filter((item) => typeof item !== "undefined")
-      );
-    } else {
-      return {};
-    }
-  } else if (parentDir === from) {
-    throw new Error("package.json not found in any parent directory");
-  } else {
-    return findPackageDependencyPaths(parentDir);
-  }
+  const packageRoot = packageDirectorySync({ cwd: path.dirname(from) });
+  assert(packageRoot, `Could not find package root from ${from}`);
+
+  const requireFromPackageRoot = createRequire(
+    path.join(packageRoot, "noop.js")
+  );
+
+  const { dependencies = {} } = readPackageSync({ cwd: packageRoot });
+
+  return Object.fromEntries(
+    Object.keys(dependencies)
+      .map((dependencyName) => {
+        const resolvedDependencyRoot = resolvePackageRoot(
+          requireFromPackageRoot,
+          dependencyName
+        );
+        return resolvedDependencyRoot
+          ? [dependencyName, resolvedDependencyRoot]
+          : undefined;
+      })
+      .filter((item) => typeof item !== "undefined")
+  );
 }
+
+export type FindXCFrameworkOptions = {
+  excludePatterns?: RegExp[];
+};
 
 /**
  * Recursively search into a directory for xcframeworks containing Node-API modules.
+ * TODO: Turn this asynchronous
  */
-export function findXCFrameworkPaths(dependencyPath: string): string[] {
-  return fs
-    .readdirSync(dependencyPath, { withFileTypes: true })
-    .flatMap((file) => {
-      if (
-        file.isFile() &&
-        file.name === MAGIC_FILENAME &&
-        path.extname(dependencyPath) === ".xcframework"
-      ) {
-        return [dependencyPath];
-      } else if (file.isDirectory()) {
+export function findXCFrameworkPaths(
+  fromPath: string,
+  options: FindXCFrameworkOptions = {},
+  suffix = ""
+): string[] {
+  const candidatePath = path.join(fromPath, suffix);
+  const { excludePatterns = DEFAULT_EXCLUDE_PATTERNS } = options;
+  return readdirSync(candidatePath, { withFileTypes: true }).flatMap((file) => {
+    if (
+      file.isFile() &&
+      file.name === MAGIC_FILENAME &&
+      path.extname(candidatePath) === ".xcframework"
+    ) {
+      return [candidatePath];
+    } else if (file.isDirectory()) {
+      const newSuffix = path.join(suffix, file.name);
+      if (!excludePatterns.some((pattern) => pattern.test(newSuffix))) {
         // Traverse into the child directory
-        return findXCFrameworkPaths(path.join(dependencyPath, file.name));
+        return findXCFrameworkPaths(fromPath, options, newSuffix);
       }
-      return [];
-    });
+    }
+    return [];
+  });
+}
+
+/**
+ * Finds all dependencies of the app package and their xcframeworks.
+ */
+export function findPackageDependencyPathsAndXcframeworks(
+  installationRoot: string,
+  options: FindXCFrameworkOptions = {}
+) {
+  // Find the location of each dependency
+  const dependencyPathsByName = findPackageDependencyPaths(installationRoot);
+  // Find all their xcframeworks
+  return Object.fromEntries(
+    Object.entries(dependencyPathsByName)
+      .map(([dependencyName, dependencyPath]) => {
+        // Make all the xcframeworks relative to the dependency path
+        const xcframeworkPaths = findXCFrameworkPaths(
+          dependencyPath,
+          options
+        ).map((p) => path.relative(dependencyPath, p));
+        return [
+          dependencyName,
+          {
+            path: dependencyPath,
+            xcframeworkPaths,
+          },
+        ] as const;
+      })
+      // Remove any dependencies without xcframeworks
+      .filter(([, { xcframeworkPaths }]) => xcframeworkPaths.length > 0)
+  );
 }
 
 type UpdateInfoPlistOptions = {
@@ -119,18 +159,18 @@ type UpdateInfoPlistOptions = {
 /**
  * Update the Info.plist file of an xcframework to use the new library name.
  */
-export function updateInfoPlist({
+export async function updateInfoPlist({
   filePath,
   oldLibraryName,
   newLibraryName,
 }: UpdateInfoPlistOptions) {
-  const infoPlistContents = fs.readFileSync(filePath, "utf-8");
+  const infoPlistContents = await fs.readFile(filePath, "utf-8");
   // TODO: Use a proper plist parser
   const updatedContents = infoPlistContents.replaceAll(
     oldLibraryName,
     newLibraryName
   );
-  fs.writeFileSync(filePath, updatedContents, "utf-8");
+  await fs.writeFile(filePath, updatedContents, "utf-8");
 }
 
 type RebuildXcframeworkOptions = {
@@ -150,14 +190,14 @@ export async function rebuildXcframeworkHashed({
   incremental,
 }: RebuildXcframeworkOptions): Promise<HashedXCFramework> {
   // Copy the xcframework to the output directory and rename the framework and binary
-  const hash = hashNodeApiModulePath(modulePath);
+  const hash = hashModulePath(modulePath);
   const tempPath = path.join(XCFRAMEWORKS_PATH, `node-api-${hash}-temp`);
   try {
     const outputPath = path.join(
       XCFRAMEWORKS_PATH,
       `node-api-${hash}.xcframework`
     );
-    if (incremental && fs.existsSync(outputPath)) {
+    if (incremental && existsSync(outputPath)) {
       const moduleModified = getLatestMtime(modulePath);
       const outputModified = getLatestMtime(outputPath);
       if (moduleModified < outputModified) {
@@ -170,21 +210,19 @@ export async function rebuildXcframeworkHashed({
       }
     }
     // Delete any existing xcframework (or xcodebuild will try to amend it)
-    fs.rmSync(outputPath, { recursive: true, force: true });
-    fs.cpSync(modulePath, tempPath, { recursive: true });
+    await fs.rm(outputPath, { recursive: true, force: true });
+    await fs.cp(modulePath, tempPath, { recursive: true });
 
     const frameworkPaths = await Promise.all(
-      fs
-        .readdirSync(tempPath, {
-          withFileTypes: true,
-        })
+      readdirSync(tempPath, {
+        withFileTypes: true,
+      })
         .filter((tripletEntry) => tripletEntry.isDirectory())
         .flatMap((tripletEntry) => {
           const tripletPath = path.join(tempPath, tripletEntry.name);
-          return fs
-            .readdirSync(tripletPath, {
-              withFileTypes: true,
-            })
+          return readdirSync(tripletPath, {
+            withFileTypes: true,
+          })
             .filter(
               (frameworkEntry) =>
                 frameworkEntry.isDirectory() &&
@@ -207,19 +245,19 @@ export async function rebuildXcframeworkHashed({
                 newLibraryName
               );
               assert(
-                fs.existsSync(oldLibraryPath),
+                existsSync(oldLibraryPath),
                 `Expected a library at '${oldLibraryPath}'`
               );
               // Rename the library
-              fs.renameSync(
+              await fs.rename(
                 oldLibraryPath,
                 // Cannot use newLibraryPath here, because the framework isn't renamed yet
                 path.join(frameworkPath, `node-api-${hash}`)
               );
               // Rename the framework
-              fs.renameSync(frameworkPath, newFrameworkPath);
+              await fs.rename(frameworkPath, newFrameworkPath);
               // Expect the library in the new location
-              assert(fs.existsSync(newLibraryPath));
+              assert(existsSync(newLibraryPath));
               // Update the binary
               await spawn(
                 "install_name_tool",
@@ -233,7 +271,7 @@ export async function rebuildXcframeworkHashed({
                 }
               );
               // Update the Info.plist file for the framework
-              updateInfoPlist({
+              await updateInfoPlist({
                 filePath: path.join(newFrameworkPath, "Info.plist"),
                 oldLibraryName,
                 newLibraryName,
@@ -267,6 +305,6 @@ export async function rebuildXcframeworkHashed({
       hash,
     };
   } finally {
-    fs.rmSync(tempPath, { recursive: true, force: true });
+    await fs.rm(tempPath, { recursive: true, force: true });
   }
 }

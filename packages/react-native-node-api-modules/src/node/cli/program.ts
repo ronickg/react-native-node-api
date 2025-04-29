@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import path from "node:path";
 import fs from "node:fs";
+import { EventEmitter } from "node:stream";
 
 import { Command } from "@commander-js/extra-typings";
 import { SpawnFailure } from "bufout";
@@ -9,15 +10,15 @@ import ora from "ora";
 
 import {
   findPackageDependencyPaths,
+  findPackageDependencyPathsAndXcframeworks,
   findXCFrameworkPaths,
   rebuildXcframeworkHashed,
   XCFRAMEWORKS_PATH,
 } from "./helpers";
+import { determineModuleContext, hashModulePath } from "../path-utils";
 
 // We're attaching a lot of listeners when spawning in parallel
-process.setMaxListeners(100);
-process.stdout.setMaxListeners(100);
-process.stderr.setMaxListeners(100);
+EventEmitter.defaultMaxListeners = 100;
 
 export const program = new Command("react-native-node-api-modules");
 
@@ -73,7 +74,7 @@ async function copyXCFrameworks({
 
     // Create or clean the output directory
     fs.mkdirSync(XCFRAMEWORKS_PATH, { recursive: true });
-    // Create symbolic links for each xcframework found in dependencies
+    // Create hashes copies of xcframework found in dependencies
     return await Promise.all(
       Object.entries(dependenciesByName).flatMap(([, dependency]) => {
         return dependency.xcframeworkPaths.map(async (xcframeworkPath) => {
@@ -175,5 +176,91 @@ program
           fs.rmSync(candidatePath, { recursive: true, force: true });
         }
       }
+    }
+  });
+
+program
+  .command("hash-xcframework <path>")
+  .description("Utility to print the hash of xcframeworks")
+  .action((pathInput) => {
+    const resolvedModulePath = path.resolve(pathInput);
+    const { packageName, relativePath } =
+      determineModuleContext(resolvedModulePath);
+    const hash = hashModulePath(resolvedModulePath);
+    console.log({ resolvedModulePath, packageName, relativePath, hash });
+  });
+
+function logXcframeworkPaths(xcframeworkPaths: string[]) {
+  for (const xcframeworkPath of xcframeworkPaths) {
+    console.log(
+      " ↳",
+      prettyPath(xcframeworkPath),
+      chalk.greenBright(`(${hashModulePath(xcframeworkPath)})`)
+    );
+  }
+}
+
+program
+  .command("print-xcframeworks")
+  .description("Lists Node-API module XCFrameworks")
+  .option("--podfile <file-path>", "Path of the App's Podfile")
+  .option("--dependency <dir-path>", "Path of some dependency directory")
+  .option("--json", "Output as JSON", false)
+  .option(
+    "--json-relative",
+    "Output as JSON with paths relative to the CWD",
+    false
+  )
+  .action(async ({ podfile: podfileArg, dependency: dependencyArg, json }) => {
+    if (podfileArg) {
+      const rootPath = path.dirname(path.resolve(podfileArg));
+      const dependencies = findPackageDependencyPathsAndXcframeworks(rootPath);
+
+      if (json) {
+        console.log(JSON.stringify(dependencies, null, 2));
+      } else {
+        const dependencyCount = Object.keys(dependencies).length;
+        const xframeworkCount = Object.values(dependencies).reduce(
+          (acc, { xcframeworkPaths }) => acc + xcframeworkPaths.length,
+          0
+        );
+        console.log(
+          "Found",
+          chalk.greenBright(xframeworkCount),
+          "xcframeworks in",
+          chalk.greenBright(dependencyCount),
+          dependencyCount === 1 ? "dependency of" : "dependencies of",
+          prettyPath(rootPath)
+        );
+        for (const [dependencyName, dependency] of Object.entries(
+          dependencies
+        )) {
+          console.log(dependencyName, "→", prettyPath(dependency.path));
+          logXcframeworkPaths(
+            dependency.xcframeworkPaths.map((p) =>
+              path.join(dependency.path, p)
+            )
+          );
+        }
+      }
+    } else if (dependencyArg) {
+      const dependencyPath = path.resolve(dependencyArg);
+      const xcframeworkPaths = findXCFrameworkPaths(dependencyPath).map((p) =>
+        path.relative(dependencyPath, p)
+      );
+
+      if (json) {
+        console.log(JSON.stringify(xcframeworkPaths, null, 2));
+      } else {
+        console.log(
+          "Found",
+          chalk.greenBright(xcframeworkPaths.length),
+          "of",
+          prettyPath(dependencyPath)
+        );
+        logXcframeworkPaths(xcframeworkPaths);
+      }
+    } else {
+      throw new Error("Expected either --podfile or --package option");
     }
   });

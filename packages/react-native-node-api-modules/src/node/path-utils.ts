@@ -3,6 +3,8 @@ import path from "node:path";
 import fs from "node:fs";
 import crypto from "node:crypto";
 
+import { spawn } from "bufout";
+
 export function isNodeApiModule(modulePath: string): boolean {
   // Determine if we're trying to load a Node-API module
   // Strip optional .node extension
@@ -78,20 +80,57 @@ export function determineModuleContext(
   }
 }
 
-export function hashNodeApiModulePath(modulePath: string) {
+export function normalizeModulePath(modulePath: string) {
   // Transforming platform specific paths to a common path
   if (path.extname(modulePath) !== ".node") {
-    return hashNodeApiModulePath(replaceWithNodeExtension(modulePath));
+    modulePath = replaceWithNodeExtension(modulePath);
   }
   const { packageName, relativePath } = determineModuleContext(modulePath);
-  const hash = crypto.createHash("sha256");
-  hash.update(path.resolve(packageName, relativePath));
-  const result = hash.digest("hex").slice(0, 8);
-  return result;
+  return path.normalize(path.join(packageName, relativePath));
 }
 
-// TODO: Find a better name for this function 🤦
-export function getNodeApiRequireCallArgument(modulePath: string) {
-  const hash = hashNodeApiModulePath(modulePath);
+type HashModulePathOptions = {
+  verify?: boolean;
+};
+
+export function hashModulePath(
+  modulePath: string,
+  { verify = true }: HashModulePathOptions = {}
+) {
+  const hash = crypto.createHash("sha256");
+  assert(
+    path.isAbsolute(modulePath),
+    `Expected absolute path when hashing, got: ${modulePath}`
+  );
+  const strippedModulePath = stripExtension(modulePath);
+  if (verify) {
+    assert(
+      isNodeApiModule(strippedModulePath),
+      `Expected a Node-API module at ${strippedModulePath}`
+    );
+  }
+  hash.update(normalizeModulePath(strippedModulePath));
+  return hash.digest("hex").slice(0, 8);
+}
+
+export function getLibraryInstallName(modulePath: string) {
+  const hash = hashModulePath(modulePath);
   return `@rpath/node-api-${hash}.framework/node-api-${hash}`;
+}
+
+export async function updateLibraryInstallPathInXCFramework(
+  xcframeworkPath: string
+) {
+  for (const file of fs.readdirSync(xcframeworkPath, {
+    withFileTypes: true,
+    recursive: true,
+  })) {
+    if (file.isDirectory() && path.extname(file.name) === ".framework") {
+      const libraryName = path.basename(file.name, ".framework");
+      const libraryPath = path.join(file.parentPath, file.name, libraryName);
+      assert(fs.existsSync(libraryPath), `Expected library at: ${libraryPath}`);
+      const newInstallName = getLibraryInstallName(xcframeworkPath);
+      await spawn("install_name_tool", ["-id", newInstallName, libraryPath]);
+    }
+  }
 }
