@@ -1,3 +1,8 @@
+
+<p align="center">
+  <img src="./docs/logo.svg" width="20%" />
+</p>
+
 <h1 align="center">
   Node-API Modules<br/>for React Native
 </h1>
