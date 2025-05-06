@@ -8,7 +8,6 @@ import {
   getLibraryName,
   logModulePaths,
   NamingStrategy,
-  PLATFORM_EXTENSIONS,
   PlatformName,
   prettyPath,
 } from "../path-utils";
@@ -152,6 +151,11 @@ export function getLinkedModuleOutputPath(
   naming: NamingStrategy
 ): string {
   const libraryName = getLibraryName(modulePath, naming);
-  const extension = PLATFORM_EXTENSIONS[platform];
-  return path.join(getAutolinkPath(platform), `${libraryName}${extension}`);
+  if (platform === "android") {
+    return path.join(getAutolinkPath(platform), libraryName);
+  } else if (platform === "apple") {
+    return path.join(getAutolinkPath(platform), libraryName + ".xcframework");
+  } else {
+    throw new Error(`Unsupported platform: ${platform}`);
+  }
 }
