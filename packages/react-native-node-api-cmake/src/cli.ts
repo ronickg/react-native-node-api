@@ -2,13 +2,20 @@ import assert from "node:assert/strict";
 import path from "node:path";
 import fs from "node:fs/promises";
 import { existsSync, readdirSync, renameSync } from "node:fs";
+import { EventEmitter } from "node:events";
 
 import { Command, Option } from "@commander-js/extra-typings";
 import { spawn, SpawnFailure } from "bufout";
 import { oraPromise } from "ora";
+import chalk from "chalk";
 
-import { SUPPORTED_TRIPLETS, SupportedTriplet } from "./triplets.js";
-import { getNodeApiHeadersPath, getNodeAddonHeadersPath } from "./headers.js";
+import {
+  SUPPORTED_TRIPLETS,
+  SupportedTriplet,
+  AndroidTriplet,
+  isAndroidTriplet,
+  isAppleTriplet,
+} from "./triplets.js";
 import {
   createFramework,
   createXCframework,
@@ -16,18 +23,17 @@ import {
   determineXCFrameworkFilename,
   getAppleBuildArgs,
   getAppleConfigureCmakeArgs,
-  isAppleTriplet,
 } from "./apple.js";
-import chalk from "chalk";
 import {
   DEFAULT_ANDROID_TRIPLETS,
   getAndroidConfigureCmakeArgs,
-  isAndroidTriplet,
+  determineAndroidLibsFilename,
+  createAndroidLibsDirectory,
 } from "./android.js";
+import { getWeakNodeApiVariables } from "./weak-node-api.js";
 
 // We're attaching a lot of listeners when spawning in parallel
-process.stdout.setMaxListeners(100);
-process.stderr.setMaxListeners(100);
+EventEmitter.defaultMaxListeners = 100;
 
 // This should match https://github.com/react-native-community/template/blob/main/template/android/build.gradle#L7
 const DEFAULT_NDK_VERSION = "27.1.12297006";
@@ -52,6 +58,9 @@ const tripletOption = new Option(
   "Triplets to build for"
 ).choices(SUPPORTED_TRIPLETS);
 
+const androidOption = new Option("--android", "Enable all Android triplets");
+const appleOption = new Option("--apple", "Enable all Apple triplets");
+
 const buildPathOption = new Option(
   "--build <path>",
   "Specify the build directory to store the configured CMake project"
@@ -72,8 +81,15 @@ const ndkVersionOption = new Option(
   "The NDK version to use for Android builds"
 ).default(DEFAULT_NDK_VERSION);
 
-const androidOption = new Option("--android", "Enable all Android triplets");
-const appleOption = new Option("--apple", "Enable all Apple triplets");
+const noAutoLinkOption = new Option(
+  "--no-auto-link",
+  "Don't mark the output as auto-linkable by react-native-node-api-modules"
+);
+
+const noWeakNodeApiLinkageOption = new Option(
+  "--no-weak-node-api-linkage",
+  "Don't pass the path of the weak-node-api library from react-native-node-api-modules"
+);
 
 export const program = new Command("react-native-node-api-cmake")
   .description("Build React Native Node API modules with CMake")
@@ -86,6 +102,8 @@ export const program = new Command("react-native-node-api-cmake")
   .addOption(outPathOption)
   .addOption(cleanOption)
   .addOption(ndkVersionOption)
+  .addOption(noAutoLinkOption)
+  .addOption(noWeakNodeApiLinkageOption)
   .action(async ({ triplet: tripletValues, ...globalContext }) => {
     try {
       const buildPath = getBuildPath(globalContext);
@@ -203,6 +221,7 @@ export const program = new Command("react-native-node-api-cmake")
           createXCframework({
             outputPath: xcframeworkOutputPath,
             frameworkPaths,
+            autoLink: globalContext.autoLink,
           }),
           {
             text: "Assembling XCFramework",
@@ -211,6 +230,57 @@ export const program = new Command("react-native-node-api-cmake")
             )}`,
             failText: ({ message }) =>
               `Failed to assemble XCFramework: ${message}`,
+          }
+        );
+      }
+
+      const androidTriplets = tripletContext.filter(({ triplet }) =>
+        isAndroidTriplet(triplet)
+      );
+      if (androidTriplets.length > 0) {
+        const libraryPathByTriplet = Object.fromEntries(
+          androidTriplets.map(({ tripletOutputPath, triplet }) => {
+            assert(
+              existsSync(tripletOutputPath),
+              `Expected a directory at ${tripletOutputPath}`
+            );
+            // Expect binary file(s), either .node or .so
+            const result = readdirSync(tripletOutputPath).map((file) => {
+              const filePath = path.join(tripletOutputPath, file);
+              if (file.endsWith(".so") || file.endsWith(".node")) {
+                return filePath;
+              } else {
+                throw new Error(
+                  `Expected a .node or .so file, but found ${file}`
+                );
+              }
+            });
+            assert.equal(result.length, 1, "Expected exactly library file");
+            return [triplet, result[0]] as const;
+          })
+        ) as Record<AndroidTriplet, string>;
+        const androidLibsFilename = determineAndroidLibsFilename(
+          Object.values(libraryPathByTriplet)
+        );
+        const androidLibsOutputPath = path.resolve(
+          // Defaults to storing the xcframework next to the CMakeLists.txt file
+          globalContext.out || globalContext.source,
+          androidLibsFilename
+        );
+
+        await oraPromise(
+          createAndroidLibsDirectory({
+            outputPath: androidLibsOutputPath,
+            libraryPathByTriplet,
+            autoLink: globalContext.autoLink,
+          }),
+          {
+            text: "Assembling Android libs directory",
+            successText: `Android libs directory assembled into ${chalk.dim(
+              path.relative(process.cwd(), androidLibsOutputPath)
+            )}`,
+            failText: ({ message }) =>
+              `Failed to assemble Android libs directory: ${message}`,
           }
         );
       }
@@ -249,12 +319,15 @@ function getTripletBuildPath(buildPath: string, triplet: SupportedTriplet) {
 
 function getTripletConfigureCmakeArgs(
   triplet: SupportedTriplet,
-  { ndkVersion }: Pick<GlobalContext, "ndkVersion">
+  { ndkVersion }: Pick<GlobalContext, "ndkVersion" | "weakNodeApiLinkage">
 ) {
   if (isAndroidTriplet(triplet)) {
-    return getAndroidConfigureCmakeArgs({ triplet, ndkVersion });
+    return getAndroidConfigureCmakeArgs({
+      triplet,
+      ndkVersion,
+    });
   } else if (isAppleTriplet(triplet)) {
-    return getAppleConfigureCmakeArgs(triplet);
+    return getAppleConfigureCmakeArgs({ triplet });
   } else {
     throw new Error(`Support for '${triplet}' is not implemented yet`);
   }
@@ -271,13 +344,8 @@ function getBuildArgs(triplet: SupportedTriplet) {
 }
 
 async function configureProject(context: TripletScopedContext) {
-  const { triplet, tripletBuildPath, source, ndkVersion } = context;
-  const variables = getVariables(context);
-  const variablesArgs = Object.entries(variables).flatMap(([key, value]) => [
-    "-D",
-    `${key}=${value}`,
-  ]);
-
+  const { triplet, tripletBuildPath, source, ndkVersion, weakNodeApiLinkage } =
+    context;
   await spawn(
     "cmake",
     [
@@ -285,8 +353,11 @@ async function configureProject(context: TripletScopedContext) {
       source,
       "-B",
       tripletBuildPath,
-      ...variablesArgs,
-      ...getTripletConfigureCmakeArgs(triplet, { ndkVersion }),
+      ...getVariablesArgs(getVariables(context)),
+      ...getTripletConfigureCmakeArgs(triplet, {
+        ndkVersion,
+        weakNodeApiLinkage,
+      }),
     ],
     {
       outputMode: "buffered",
@@ -313,15 +384,15 @@ async function buildProject(context: TripletScopedContext) {
 }
 
 function getVariables(context: TripletScopedContext): Record<string, string> {
-  const includePaths = [getNodeApiHeadersPath(), getNodeAddonHeadersPath()];
-  for (const includePath of includePaths) {
-    assert(
-      !includePath.includes(";"),
-      `Include path with a ';' is not supported: ${includePath}`
-    );
-  }
   return {
-    CMAKE_JS_INC: includePaths.join(";"),
+    ...(context.weakNodeApiLinkage && getWeakNodeApiVariables(context.triplet)),
     CMAKE_LIBRARY_OUTPUT_DIRECTORY: context.tripletOutputPath,
   };
+}
+
+function getVariablesArgs(variables: Record<string, string>) {
+  return Object.entries(variables).flatMap(([key, value]) => [
+    "-D",
+    `${key}=${value}`,
+  ]);
 }

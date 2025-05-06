@@ -3,23 +3,9 @@ import cp from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 
-import type { SupportedTriplet } from "./triplets.js";
 import { spawn } from "bufout";
 
-export const APPLE_TRIPLETS = [
-  "arm64;x86_64-apple-darwin",
-  "x86_64-apple-darwin",
-  "arm64-apple-darwin",
-  "arm64-apple-ios",
-  "arm64-apple-ios-sim",
-  "arm64-apple-tvos",
-  "arm64-apple-tvos-sim",
-  // "x86_64-apple-tvos",
-  "arm64-apple-visionos",
-  "arm64-apple-visionos-sim",
-] as const;
-
-export type AppleTriplet = (typeof APPLE_TRIPLETS)[number];
+import { AppleTriplet, isAppleTriplet } from "./triplets.js";
 
 export const DEFAULT_APPLE_TRIPLETS = [
   "arm64;x86_64-apple-darwin",
@@ -41,7 +27,7 @@ type XcodeSDKName =
   | "appletvsimulator"
   | "macosx";
 
-const SDK_NAMES = {
+const XCODE_SDK_NAMES = {
   "x86_64-apple-darwin": "macosx",
   "arm64-apple-darwin": "macosx",
   "arm64;x86_64-apple-darwin": "macosx",
@@ -54,9 +40,24 @@ const SDK_NAMES = {
   "arm64-apple-visionos-sim": "xrsimulator",
 } satisfies Record<AppleTriplet, XcodeSDKName>;
 
+type CMakeSystemName = "Darwin" | "iOS" | "tvOS" | "watchOS" | "visionOS";
+
+const CMAKE_SYSTEM_NAMES = {
+  "x86_64-apple-darwin": "Darwin",
+  "arm64-apple-darwin": "Darwin",
+  "arm64;x86_64-apple-darwin": "Darwin",
+  "arm64-apple-ios": "iOS",
+  "arm64-apple-ios-sim": "iOS",
+  "arm64-apple-tvos": "tvOS",
+  // "x86_64-apple-tvos": "appletvos",
+  "arm64-apple-tvos-sim": "tvOS",
+  "arm64-apple-visionos": "visionOS",
+  "arm64-apple-visionos-sim": "visionOS",
+} satisfies Record<AppleTriplet, CMakeSystemName>;
+
 type AppleArchitecture = "arm64" | "x86_64" | "arm64;x86_64";
 
-export const ARCHITECTURES = {
+export const APPLE_ARCHITECTURES = {
   "x86_64-apple-darwin": "x86_64",
   "arm64-apple-darwin": "arm64",
   "arm64;x86_64-apple-darwin": "arm64;x86_64",
@@ -69,17 +70,15 @@ export const ARCHITECTURES = {
   "arm64-apple-visionos-sim": "arm64",
 } satisfies Record<AppleTriplet, AppleArchitecture>;
 
-export function isAppleTriplet(
-  triplet: SupportedTriplet
-): triplet is AppleTriplet {
-  return APPLE_TRIPLETS.includes(triplet as AppleTriplet);
-}
-
 export function getAppleSDKPath(triplet: AppleTriplet) {
   return cp
-    .spawnSync("xcrun", ["--sdk", SDK_NAMES[triplet], "--show-sdk-path"], {
-      encoding: "utf-8",
-    })
+    .spawnSync(
+      "xcrun",
+      ["--sdk", XCODE_SDK_NAMES[triplet], "--show-sdk-path"],
+      {
+        encoding: "utf-8",
+      }
+    )
     .stdout.trim();
 }
 
@@ -98,23 +97,27 @@ export function createPlistContent(values: Record<string, string>) {
   ].join("\n");
 }
 
-export function getAppleConfigureCmakeArgs(triplet: AppleTriplet) {
+type AppleConfigureOptions = {
+  triplet: AppleTriplet;
+};
+
+export function getAppleConfigureCmakeArgs({ triplet }: AppleConfigureOptions) {
   assert(isAppleTriplet(triplet));
   const sdkPath = getAppleSDKPath(triplet);
+  const systemName = CMAKE_SYSTEM_NAMES[triplet];
 
   return [
     // Use the XCode as generator for Apple platforms
     "-G",
     "Xcode",
-    // Pass linker flags to avoid errors from undefined symbols
     "-D",
-    `CMAKE_SHARED_LINKER_FLAGS="-Wl,-undefined,dynamic_lookup"`,
+    `CMAKE_SYSTEM_NAME=${systemName}`,
     // Set the SDK path for the target platform
     "-D",
     `CMAKE_OSX_SYSROOT=${sdkPath}`,
     // Set the target architecture
     "-D",
-    `CMAKE_OSX_ARCHITECTURES=${ARCHITECTURES[triplet]}`,
+    `CMAKE_OSX_ARCHITECTURES=${APPLE_ARCHITECTURES[triplet]}`,
   ];
 }
 
@@ -126,6 +129,7 @@ export function getAppleBuildArgs() {
 type XCframeworkOptions = {
   frameworkPaths: string[];
   outputPath: string;
+  autoLink: boolean;
 };
 
 export function createFramework(libraryPath: string) {
@@ -171,6 +175,7 @@ export function createFramework(libraryPath: string) {
 export async function createXCframework({
   frameworkPaths,
   outputPath,
+  autoLink,
 }: XCframeworkOptions) {
   // Delete any existing xcframework to prevent the error:
   // - A library with the identifier 'macos-arm64' already exists.
@@ -189,13 +194,15 @@ export async function createXCframework({
       outputMode: "buffered",
     }
   );
-  // Write a file to mark the xcframework is a Node-API module
-  // TODO: Consider including this in the Info.plist file instead
-  fs.writeFileSync(
-    path.join(outputPath, "react-native-node-api-module"),
-    "",
-    "utf8"
-  );
+  if (autoLink) {
+    // Write a file to mark the xcframework is a Node-API module
+    // TODO: Consider including this in the Info.plist file instead
+    fs.writeFileSync(
+      path.join(outputPath, "react-native-node-api-module"),
+      "",
+      "utf8"
+    );
+  }
 }
 
 /**
