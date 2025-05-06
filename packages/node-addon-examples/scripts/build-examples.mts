@@ -7,7 +7,8 @@ const projectDirectories = findCMakeProjects();
 for (const projectDirectory of projectDirectories) {
   console.log(`Running "react-native-node-api-cmake" in ${projectDirectory}`);
   execSync(
-    "react-native-node-api-cmake --triplet aarch64-linux-android --triplet arm64-apple-ios-sim",
+    "react-native-node-api-cmake --android --apple",
+    // "react-native-node-api-cmake --triplet aarch64-linux-android --triplet arm64-apple-ios-sim",
     {
       cwd: projectDirectory,
       stdio: "inherit",
