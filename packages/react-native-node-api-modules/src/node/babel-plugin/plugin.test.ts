@@ -6,7 +6,7 @@ import { transformFileSync } from "@babel/core";
 
 import { plugin } from "./plugin.js";
 import { setupTempDirectory } from "../test-utils.js";
-import { getLibraryInstallName } from "../path-utils.js";
+import { getLibraryName } from "../path-utils.js";
 
 describe("plugin", () => {
   it("transforms require calls, regardless", (context) => {
@@ -38,19 +38,19 @@ describe("plugin", () => {
       `,
     });
 
-    const ADDON_1_REQUIRE_ARG = getLibraryInstallName(
+    const ADDON_1_REQUIRE_ARG = getLibraryName(
       path.join(tempDirectoryPath, "addon-1"),
-      "hash"
+      { stripPathSuffix: false }
     );
-    const ADDON_2_REQUIRE_ARG = getLibraryInstallName(
+    const ADDON_2_REQUIRE_ARG = getLibraryName(
       path.join(tempDirectoryPath, "addon-2"),
-      "hash"
+      { stripPathSuffix: false }
     );
 
     {
       const result = transformFileSync(
         path.join(tempDirectoryPath, "./addon-1.js"),
-        { plugins: [[plugin, { naming: "hash" }]] }
+        { plugins: [[plugin, { stripPathSuffix: false }]] }
       );
       assert(result);
       const { code } = result;
