@@ -1,5 +1,4 @@
 import assert from "node:assert/strict";
-import cp from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -70,18 +69,6 @@ export const APPLE_ARCHITECTURES = {
   "arm64-apple-visionos-sim": "arm64",
 } satisfies Record<AppleTriplet, AppleArchitecture>;
 
-export function getAppleSDKPath(triplet: AppleTriplet) {
-  return cp
-    .spawnSync(
-      "xcrun",
-      ["--sdk", XCODE_SDK_NAMES[triplet], "--show-sdk-path"],
-      {
-        encoding: "utf-8",
-      }
-    )
-    .stdout.trim();
-}
-
 export function createPlistContent(values: Record<string, string>) {
   return [
     '<?xml version="1.0" encoding="UTF-8"?>',
@@ -103,7 +90,6 @@ type AppleConfigureOptions = {
 
 export function getAppleConfigureCmakeArgs({ triplet }: AppleConfigureOptions) {
   assert(isAppleTriplet(triplet));
-  const sdkPath = getAppleSDKPath(triplet);
   const systemName = CMAKE_SYSTEM_NAMES[triplet];
 
   return [
@@ -114,7 +100,7 @@ export function getAppleConfigureCmakeArgs({ triplet }: AppleConfigureOptions) {
     `CMAKE_SYSTEM_NAME=${systemName}`,
     // Set the SDK path for the target platform
     "-D",
-    `CMAKE_OSX_SYSROOT=${sdkPath}`,
+    `CMAKE_OSX_SYSROOT=${XCODE_SDK_NAMES[triplet]}`,
     // Set the target architecture
     "-D",
     `CMAKE_OSX_ARCHITECTURES=${APPLE_ARCHITECTURES[triplet]}`,
