@@ -69,7 +69,7 @@ bool CxxNodeApiHostModule::loadNodeAddon(NodeAddon &addon,
     // the pointer address of the loaded module
     addon.generatedName.resize(32, '\0');
     snprintf(addon.generatedName.data(), addon.generatedName.size(),
-             "RN$NodeAddon_%lX", (uintptr_t)addon.moduleHandle);
+             "RN$NodeAddon_%p", addon.moduleHandle);
 
     initFn = LoaderPolicy::getSymbol(library, "napi_register_module_v1");
     if (NULL != initFn) {

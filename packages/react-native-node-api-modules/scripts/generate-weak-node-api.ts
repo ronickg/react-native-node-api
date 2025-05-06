@@ -76,46 +76,56 @@ type FunctionDecl = {
   returnType: string;
   argumentTypes: string[];
   libraryPath: string;
+  fallbackReturnStatement: string;
 };
 
-export function generateNodeApiFunction({
+export function generateNodeApiFunctionStubBody({
   name,
   returnType,
   argumentTypes,
   libraryPath,
+  fallbackReturnStatement,
 }: FunctionDecl) {
-  const stubbedReturnStatement =
-    returnType === "void"
+  const returnStatement =
+    name === "napi_fatal_error"
       ? "abort();"
-      : "return napi_status::napi_generic_failure;";
+      : returnType === "void"
+      ? ""
+      : `return real_func(${argumentTypes
+          .map((t, index) => `arg${index}`)
+          .join(", ")}); // Call the real function`;
   return `
-typedef ${returnType} (*${name}_t)(${argumentTypes.join(", ")});
-
-${returnType} ${name}(${argumentTypes
-    .map((type, index) => `${type} arg${index}`)
-    .join(", ")})  {
-    #ifdef NODE_API_REEXPORT
     static ${name}_t real_func = NULL;
 
     if (!real_func) {
         void* handle = dlopen("${libraryPath}", RTLD_LAZY | RTLD_GLOBAL);
         if (!handle) {
             fprintf(stderr, "Failed to load ${libraryPath}: %s\\n", dlerror());
-            ${stubbedReturnStatement}
+            ${fallbackReturnStatement}
         }
 
         real_func = (${name}_t)dlsym(handle, "${name}");
         if (!real_func) {
             fprintf(stderr, "Failed to find symbol: %s\\n", dlerror());
-            ${stubbedReturnStatement}
+            ${fallbackReturnStatement}
         }
     }
 
-    ${returnType === "void" ? "" : "return "}real_func(${argumentTypes
-    .map((t, index) => `arg${index}`)
-    .join(", ")});  // Call the real function
+    ${returnStatement}
+  `;
+}
+
+export function generateNodeApiFunction(decl: FunctionDecl) {
+  const { name, returnType, argumentTypes, fallbackReturnStatement } = decl;
+  return `
+typedef ${returnType} (*${name}_t)(${argumentTypes.join(", ")});
+${returnType} ${name}(${argumentTypes
+    .map((type, index) => `${type} arg${index}`)
+    .join(", ")})  {
+    #ifdef NODE_API_REEXPORT
+    ${generateNodeApiFunctionStubBody(decl)}
     #else
-    ${stubbedReturnStatement}
+    ${fallbackReturnStatement}
     #endif
 }`;
 }
@@ -179,6 +189,10 @@ export function generateFakeNodeApiSource(version: NodeApiVersion) {
           libraryPath: engineSymbols.has(name)
             ? "libhermes.so"
             : "libnode-api-host.so",
+          fallbackReturnStatement:
+            returnType === "void"
+              ? "abort();"
+              : "return napi_status::napi_generic_failure;",
         })
       );
     }
@@ -200,21 +214,6 @@ async function run() {
     path.join(WEAK_NODE_API_PATH, "weak-node-api.cpp"),
     sourceCode,
     "utf-8"
-  );
-  // Build for all supported platforms
-  cp.execFileSync(
-    "react-native-node-api-cmake",
-    [
-      "--android",
-      "--apple",
-      "--no-auto-link",
-      "--no-weak-node-api-linkage",
-      // TODO: Add support for passing variables through to CMake
-      // "-D NODE_API_REEXPORT=1",
-      "--source",
-      WEAK_NODE_API_PATH,
-    ],
-    { stdio: "inherit" }
   );
 }
 
