@@ -202,7 +202,7 @@ async function run() {
     "utf-8"
   );
   // Build for all supported platforms
-  cp.spawnSync(
+  cp.execFileSync(
     "react-native-node-api-cmake",
     [
       "--android",
