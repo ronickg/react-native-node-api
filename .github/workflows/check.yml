@@ -14,7 +14,8 @@ jobs:
           node-version: lts/jod
       - run: npm ci
       - run: npm run lint
-  test:
+  test-simple:
+    name: Run tests which doesn't require MacOS
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -23,5 +24,16 @@ jobs:
           node-version: lts/jod
       - run: npm ci
       - run: npm run build
+      - run: npm test --workspace gyp-to-cmake --workspace react-native-node-api-cmake --workspace react-native-node-api-modules
+  test-macos:
+    name: Run tests which requires MacOS
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/jod
+      - run: npm ci
+      - run: npm run build
       - run: npm run build-weak-node-api --workspace react-native-node-api-modules
-      - run: npm test --workspaces
+      - run: npm test --workspace react-native-node-addon-examples
