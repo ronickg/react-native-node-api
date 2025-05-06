@@ -71,10 +71,7 @@ export const command = new Command("vendor-hermes")
     } catch (error) {
       if (error instanceof SpawnFailure) {
         error.flushOutput("both");
-        process.exitCode = 1;
-      } else {
-        process.exitCode = 2;
-        throw error;
       }
+      throw error;
     }
   });
