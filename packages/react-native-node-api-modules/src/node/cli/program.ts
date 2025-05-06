@@ -3,19 +3,25 @@ import path from "node:path";
 import fs from "node:fs";
 import { EventEmitter } from "node:stream";
 
-import { Command } from "@commander-js/extra-typings";
+import { Command, Option } from "@commander-js/extra-typings";
 import { SpawnFailure } from "bufout";
 import chalk from "chalk";
-import ora from "ora";
+import { oraPromise } from "ora";
 
 import {
   findPackageDependencyPaths,
   findPackageDependencyPathsAndXcframeworks,
   findXCFrameworkPaths,
-  rebuildXcframeworkHashed,
+  hasDuplicatesWhenVendored,
+  vendorXcframework,
   XCFRAMEWORKS_PATH,
 } from "./helpers";
-import { determineModuleContext, hashModulePath } from "../path-utils";
+import {
+  NamingStrategy,
+  determineModuleContext,
+  getLibraryDiscriminator,
+  hashModulePath,
+} from "../path-utils";
 
 // We're attaching a lot of listeners when spawning in parallel
 EventEmitter.defaultMaxListeners = 100;
@@ -29,6 +35,7 @@ function prettyPath(p: string) {
 type CopyXCFrameworksOptions = {
   installationRoot: string;
   incremental: boolean;
+  naming: NamingStrategy;
 };
 
 type XCFrameworkOutputBase = {
@@ -45,44 +52,58 @@ type XCFrameworkOutput = XCFrameworkOutputBase &
 async function copyXCFrameworks({
   installationRoot,
   incremental,
+  naming,
 }: CopyXCFrameworksOptions): Promise<XCFrameworkOutput[]> {
-  const spinner = ora(
-    `Copying Node-API xcframeworks into ${prettyPath(XCFRAMEWORKS_PATH)}`
-  ).start();
-  try {
-    // Find the location of each dependency
-    const dependencyPathsByName = findPackageDependencyPaths(installationRoot);
-    // Find all their xcframeworks
-    const dependenciesByName = Object.fromEntries(
-      Object.entries(dependencyPathsByName)
-        .map(([dependencyName, dependencyPath]) => {
-          // Make all the xcframeworks relative to the dependency path
-          const xcframeworkPaths = findXCFrameworkPaths(dependencyPath).map(
-            (p) => path.relative(dependencyPath, p)
-          );
-          return [
-            dependencyName,
-            {
-              path: dependencyPath,
-              xcframeworkPaths,
-            },
-          ] as const;
-        })
-        // Remove any dependencies without xcframeworks
-        .filter(([, { xcframeworkPaths }]) => xcframeworkPaths.length > 0)
-    );
+  // Find the location of each dependency
+  const dependencyPathsByName = findPackageDependencyPaths(installationRoot);
+  // Find all their xcframeworks
+  const dependenciesByName = Object.fromEntries(
+    Object.entries(dependencyPathsByName)
+      .map(([dependencyName, dependencyPath]) => {
+        // Make all the xcframeworks relative to the dependency path
+        const xcframeworkPaths = findXCFrameworkPaths(dependencyPath).map((p) =>
+          path.relative(dependencyPath, p)
+        );
+        return [
+          dependencyName,
+          {
+            path: dependencyPath,
+            xcframeworkPaths,
+          },
+        ] as const;
+      })
+      // Remove any dependencies without xcframeworks
+      .filter(([, { xcframeworkPaths }]) => xcframeworkPaths.length > 0)
+  );
 
-    // Create or clean the output directory
-    fs.mkdirSync(XCFRAMEWORKS_PATH, { recursive: true });
-    // Create hashes copies of xcframework found in dependencies
-    return await Promise.all(
+  // Create or clean the output directory
+  fs.mkdirSync(XCFRAMEWORKS_PATH, { recursive: true });
+  // Create vendored copies of xcframework found in dependencies
+
+  const xcframeworksPaths = Object.entries(dependenciesByName).flatMap(
+    ([, dependency]) => {
+      return dependency.xcframeworkPaths.map((xcframeworkPath) =>
+        path.join(dependency.path, xcframeworkPath)
+      );
+    }
+  );
+
+  if (hasDuplicatesWhenVendored(xcframeworksPaths, naming)) {
+    // TODO: Make this prettier
+    logXcframeworkPaths(xcframeworksPaths, naming);
+    throw new Error("Found conflicting xcframeworks");
+  }
+
+  return oraPromise(
+    Promise.all(
       Object.entries(dependenciesByName).flatMap(([, dependency]) => {
         return dependency.xcframeworkPaths.map(async (xcframeworkPath) => {
           const originalPath = path.join(dependency.path, xcframeworkPath);
           try {
-            return await rebuildXcframeworkHashed({
+            return await vendorXcframework({
               modulePath: originalPath,
               incremental,
+              naming,
             });
           } catch (error) {
             if (error instanceof SpawnFailure) {
@@ -97,13 +118,38 @@ async function copyXCFrameworks({
           }
         });
       })
-    );
-  } finally {
-    spinner.stop();
-  }
+    ),
+    {
+      text: `Copying Node-API xcframeworks into ${prettyPath(
+        XCFRAMEWORKS_PATH
+      )}`,
+      successText: `Copied Node-API xcframeworks into ${prettyPath(
+        XCFRAMEWORKS_PATH
+      )}`,
+      failText: (err) =>
+        `Failed to copy Node-API xcframeworks into ${prettyPath(
+          XCFRAMEWORKS_PATH
+        )}: ${err.message}`,
+    }
+  );
 }
 
 // TODO: Consider adding a flag to drive the build of the original xcframeworks too
+
+const { NODE_API_MODULES_NAMING = "package-name" } = process.env;
+assert(
+  typeof NODE_API_MODULES_NAMING === "undefined" ||
+    NODE_API_MODULES_NAMING === "hash" ||
+    NODE_API_MODULES_NAMING === "package-name",
+  "Expected NODE_API_MODULES_NAMING to be either 'hash' or 'package-name'"
+);
+
+const namingStrategyOption = new Option(
+  "--naming <strategy>",
+  "Naming strategy to use when copying the xcframeworks"
+)
+  .choices(["hash", "package-name"] as const satisfies NamingStrategy[])
+  .default(NODE_API_MODULES_NAMING as NamingStrategy);
 
 program
   .command("copy-xcframeworks")
@@ -115,11 +161,14 @@ program
     "Don't check timestamps of input files to skip unnecessary rebuilds",
     false
   )
+  .addOption(namingStrategyOption)
   .option("--prune", "Delete xcframeworks that are no longer auto-linked", true)
-  .action(async (installationRoot: string, { force, prune }) => {
+  .action(async (installationRoot: string, { force, prune, naming }) => {
+    console.log(`Using ${naming} naming strategy`);
     const xcframeworks = await copyXCFrameworks({
       installationRoot,
       incremental: !force,
+      naming,
     });
 
     const failures = xcframeworks.filter((result) => "failure" in result);
@@ -190,12 +239,45 @@ program
     console.log({ resolvedModulePath, packageName, relativePath, hash });
   });
 
-function logXcframeworkPaths(xcframeworkPaths: string[]) {
-  for (const xcframeworkPath of xcframeworkPaths) {
+function findDuplicates(values: string[]) {
+  const seen = new Set<string>();
+  const duplicates = new Set<string>();
+  for (const value of values) {
+    if (seen.has(value)) {
+      duplicates.add(value);
+    } else {
+      seen.add(value);
+    }
+  }
+  return duplicates;
+}
+
+function logXcframeworkPaths(
+  xcframeworkPaths: string[],
+  // TODO: Default to iterating and printing for all supported naming strategies
+  naming?: NamingStrategy
+) {
+  const discriminatorsPerPath = Object.fromEntries(
+    xcframeworkPaths.map((xcframeworkPath) => [
+      xcframeworkPath,
+      naming ? getLibraryDiscriminator(xcframeworkPath, naming) : undefined,
+    ])
+  );
+  const duplicates = findDuplicates(
+    Object.values(discriminatorsPerPath).filter((p) => typeof p === "string")
+  );
+  for (const [xcframeworkPath, discriminator] of Object.entries(
+    discriminatorsPerPath
+  )) {
+    const duplicated = discriminator && duplicates.has(discriminator);
     console.log(
       " ↳",
       prettyPath(xcframeworkPath),
-      chalk.greenBright(`(${hashModulePath(xcframeworkPath)})`)
+      discriminator
+        ? duplicated
+          ? chalk.redBright(`(${discriminator})`)
+          : chalk.greenBright(`(${discriminator})`)
+        : ""
     );
   }
 }
@@ -206,11 +288,6 @@ program
   .option("--podfile <file-path>", "Path of the App's Podfile")
   .option("--dependency <dir-path>", "Path of some dependency directory")
   .option("--json", "Output as JSON", false)
-  .option(
-    "--json-relative",
-    "Output as JSON with paths relative to the CWD",
-    false
-  )
   .action(async ({ podfile: podfileArg, dependency: dependencyArg, json }) => {
     if (podfileArg) {
       const rootPath = path.dirname(path.resolve(podfileArg));

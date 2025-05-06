@@ -3,7 +3,10 @@ import path from "node:path";
 import fs from "node:fs";
 import crypto from "node:crypto";
 
-import { spawn } from "bufout";
+// import { spawn } from "bufout";
+
+export const NAMING_STATEGIES = ["hash", "package-name"] as const;
+export type NamingStrategy = (typeof NAMING_STATEGIES)[number];
 
 export function isNodeApiModule(modulePath: string): boolean {
   // Determine if we're trying to load a Node-API module
@@ -89,6 +92,23 @@ export function normalizeModulePath(modulePath: string) {
   return path.normalize(path.join(packageName, relativePath));
 }
 
+// export async function updateLibraryInstallPathInXCFramework(
+//   xcframeworkPath: string
+// ) {
+//   for (const file of fs.readdirSync(xcframeworkPath, {
+//     withFileTypes: true,
+//     recursive: true,
+//   })) {
+//     if (file.isDirectory() && path.extname(file.name) === ".framework") {
+//       const libraryName = path.basename(file.name, ".framework");
+//       const libraryPath = path.join(file.parentPath, file.name, libraryName);
+//       assert(fs.existsSync(libraryPath), `Expected library at: ${libraryPath}`);
+//       const newInstallName = getLibraryInstallName(xcframeworkPath);
+//       await spawn("install_name_tool", ["-id", newInstallName, libraryPath]);
+//     }
+//   }
+// }
+
 type HashModulePathOptions = {
   verify?: boolean;
 };
@@ -113,24 +133,29 @@ export function hashModulePath(
   return hash.digest("hex").slice(0, 8);
 }
 
-export function getLibraryInstallName(modulePath: string) {
-  const hash = hashModulePath(modulePath);
-  return `@rpath/node-api-${hash}.framework/node-api-${hash}`;
+export function getLibraryDiscriminator(
+  modulePath: string,
+  naming: NamingStrategy
+) {
+  if (naming === "package-name") {
+    const { packageName } = determineModuleContext(modulePath);
+    return packageName;
+  } else if (naming === "hash") {
+    return hashModulePath(modulePath);
+  } else {
+    throw new Error(`Unknown naming strategy: ${naming}`);
+  }
 }
 
-export async function updateLibraryInstallPathInXCFramework(
-  xcframeworkPath: string
+export function getLibraryName(modulePath: string, naming: NamingStrategy) {
+  const discriminator = getLibraryDiscriminator(modulePath, naming);
+  return naming === "hash" ? `node-api-${discriminator}` : discriminator;
+}
+
+export function getLibraryInstallName(
+  modulePath: string,
+  naming: NamingStrategy
 ) {
-  for (const file of fs.readdirSync(xcframeworkPath, {
-    withFileTypes: true,
-    recursive: true,
-  })) {
-    if (file.isDirectory() && path.extname(file.name) === ".framework") {
-      const libraryName = path.basename(file.name, ".framework");
-      const libraryPath = path.join(file.parentPath, file.name, libraryName);
-      assert(fs.existsSync(libraryPath), `Expected library at: ${libraryPath}`);
-      const newInstallName = getLibraryInstallName(xcframeworkPath);
-      await spawn("install_name_tool", ["-id", newInstallName, libraryPath]);
-    }
-  }
+  const libraryName = getLibraryName(modulePath, naming);
+  return `@rpath/${libraryName}.framework/${libraryName}`;
 }
