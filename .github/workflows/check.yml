@@ -44,5 +44,6 @@ jobs:
       - run: sdkmanager --install "ndk;27.1.12297006"
       - run: npm ci
       - run: npm run build
+      - run: npm run copy-node-api-headers --workspace react-native-node-api-modules
       - run: npm run build-weak-node-api --workspace react-native-node-api-modules
       - run: npm test --workspace react-native-node-addon-examples
