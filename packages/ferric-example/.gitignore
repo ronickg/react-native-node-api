@@ -1,0 +1,9 @@
+/target
+Cargo.lock
+
+/*.xcframework/
+/*.android.node/
+
+# Generated files
+/libferric_example.d.ts
+/libferric_example.js
