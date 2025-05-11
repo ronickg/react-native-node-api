@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import path from "node:path";
-import fs, { readdirSync } from "node:fs";
+import fs from "node:fs";
 import { findDuplicates } from "./duplicates";
 import chalk from "chalk";
 import { packageDirectorySync } from "pkg-dir";
@@ -22,21 +22,37 @@ export type NamingStrategy = {
   stripPathSuffix: boolean;
 };
 
+// Cache mapping package directory to package name across calls
+const packageNameCache = new Map<string, string>();
+
 /**
- * @param modulePath The path to the module to check (must be extensionless or end in .node)
- * @returns True if a platform specific prebuild exists for the module path.
+ * @param modulePath  Batch-scans the path to the module to check (must be extensionless or end in .node)
+ * @returns True if a platform specific prebuild exists for the module path, warns on unreadable modules.
+ * @throws If the parent directory cannot be read, or if a detected module is unreadable.
  * TODO: Consider checking for a specific platform extension.
  */
 export function isNodeApiModule(modulePath: string): boolean {
-  // Determine if we're trying to load a Node-API module
-  // Strip optional .node extension
-  const candidateBasePath = path.resolve(
-    path.dirname(modulePath),
-    path.basename(modulePath, ".node")
-  );
-  return Object.values(PLATFORM_EXTENSIONS)
-    .map((extension) => candidateBasePath + extension)
-    .some(fs.existsSync);
+  const dir = path.dirname(modulePath);
+  const baseName = path.basename(modulePath, ".node");
+  let entries: string[];
+  try {
+    entries = fs.readdirSync(dir);
+  } catch {
+    // Cannot read directory: treat as no module
+    return false;
+  }
+  return Object.values(PLATFORM_EXTENSIONS).some(extension => {
+    const fileName = baseName + extension;
+    if (!entries.includes(fileName)) {
+      return false;
+    }
+    try {
+      fs.accessSync(path.join(dir, fileName), fs.constants.R_OK);
+      return true;
+    } catch (cause) {
+      throw new Error(`Found an unreadable module ${fileName}: ${cause}`);
+    }
+  });
 }
 
 /**
@@ -78,34 +94,24 @@ export function determineModuleContext(
   modulePath: string,
   originalPath = modulePath
 ): ModuleContext {
-  const candidatePackageJsonPath = path.join(modulePath, "package.json");
-  const parentDirectoryPath = path.dirname(modulePath);
-  if (fs.existsSync(candidatePackageJsonPath)) {
-    const packageJsonContent = fs.readFileSync(
-      candidatePackageJsonPath,
-      "utf8"
-    );
-    const packageJson = JSON.parse(packageJsonContent) as unknown;
-    assert(
-      typeof packageJson === "object" && packageJson !== null,
-      "Expected package.json to be an object"
-    );
-    assert(
-      "name" in packageJson && typeof packageJson.name === "string",
-      "Expected package.json to have a name"
-    );
-    return {
-      packageName: packageJson.name,
-      relativePath: normalizeModulePath(
-        path.relative(modulePath, originalPath)
-      ),
-    };
-  } else if (parentDirectoryPath === modulePath) {
-    // We've reached the root of the filesystem
+  // Locate nearest package directory
+  const pkgDir = packageDirectorySync({ cwd: modulePath });
+  if (!pkgDir) {
     throw new Error("Could not find containing package");
-  } else {
-    return determineModuleContext(parentDirectoryPath, originalPath);
   }
+  // Read and cache package name
+  let pkgName = packageNameCache.get(pkgDir);
+  if (!pkgName) {
+    const pkg = readPackageSync({ cwd: pkgDir });
+    assert(typeof pkg.name === "string", "Expected package.json to have a name");
+    pkgName = pkg.name;
+    packageNameCache.set(pkgDir, pkgName);
+  }
+  // Compute module-relative path
+  const relPath = normalizeModulePath(
+    path.relative(pkgDir, originalPath)
+  );
+  return { packageName: pkgName, relativePath: relPath };
 }
 
 export function normalizeModulePath(modulePath: string) {
@@ -246,7 +252,7 @@ export function findNodeApiModulePaths(
     return [];
   }
   const candidatePath = path.join(fromPath, suffix);
-  return readdirSync(candidatePath, { withFileTypes: true }).flatMap((file) => {
+  return fs.readdirSync(candidatePath, { withFileTypes: true }).flatMap((file) => {
     if (
       file.isFile() &&
       file.name === MAGIC_FILENAME &&
