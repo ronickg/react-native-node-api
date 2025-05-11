@@ -1,8 +1,8 @@
 {
   "name": "ferric-example",
   "version": "0.1.0",
-  "main": "libferric_example.js",
-  "types": "libferric_example.d.ts",
+  "main": "ferric_example.js",
+  "types": "ferric_example.d.ts",
   "scripts": {
     "build": "ferric build --android --apple"
   },
