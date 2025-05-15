@@ -3,7 +3,6 @@ import fs from "node:fs";
 
 import { Command, Option } from "@commander-js/extra-typings";
 import chalk from "chalk";
-import { SpawnFailure } from "bufout";
 import { oraPromise } from "ora";
 
 import {
@@ -18,8 +17,7 @@ import {
   prettyPath,
 } from "react-native-node-api-modules";
 
-import { UsageError } from "./errors.js";
-import { ensureCargo, build } from "./cargo.js";
+import { ensureCargo, build } from "../cargo.js";
 import {
   ALL_TARGETS,
   ANDROID_TARGETS,
@@ -28,9 +26,10 @@ import {
   AppleTargetName,
   ensureInstalledTargets,
   filterTargetsByPlatform,
-} from "./targets.js";
-import { generateTypeScriptDeclarations } from "./napi-rs.js";
-import { getBlockComment } from "./banner.js";
+} from "../targets.js";
+import { generateTypeScriptDeclarations } from "../napi-rs.js";
+import { getBlockComment } from "../banner.js";
+import { wrapAction } from "../utils.js";
 
 type EntrypointOptions = {
   outputPath: string;
@@ -97,16 +96,16 @@ export const buildCommand = new Command("build")
   .addOption(configurationOption)
   .addOption(xcframeworkExtensionOption)
   .action(
-    async ({
-      target: targetArg,
-      apple,
-      android,
-      ndkVersion,
-      output: outputPath,
-      configuration,
-      xcframeworkExtension,
-    }) => {
-      try {
+    wrapAction(
+      async ({
+        target: targetArg,
+        apple,
+        android,
+        ndkVersion,
+        output: outputPath,
+        configuration,
+        xcframeworkExtension,
+      }) => {
         const targets = new Set([...targetArg]);
         if (apple) {
           for (const target of APPLE_TARGETS) {
@@ -260,28 +259,8 @@ export const buildCommand = new Command("build")
             }
           );
         }
-      } catch (error) {
-        if (error instanceof SpawnFailure) {
-          error.flushOutput("both");
-        }
-        if (error instanceof UsageError || error instanceof SpawnFailure) {
-          console.error(chalk.red("ERROR"), error.message);
-          if (error.cause instanceof Error) {
-            console.error(chalk.red("CAUSE"), error.cause.message);
-          }
-          if (error instanceof UsageError && error.fix) {
-            console.error(
-              chalk.green("FIX"),
-              error.fix.command
-                ? chalk.dim("Run: ") + error.fix.command
-                : error.fix.instructions
-            );
-          }
-        } else {
-          throw error;
-        }
       }
-    }
+    )
   );
 
 async function combineLibraries(
