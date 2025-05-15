@@ -1,0 +1,18 @@
+{
+  "name": "<packageName>",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "node": "./index.node.js",
+      "react-native": "./index.react-native.js"
+    }
+  },
+  "script": {
+    "build": "ferric build --android --ios"
+  },
+  "devDependencies": {
+    "ferric-modules": "^<ferricVersion>"
+  }
+}

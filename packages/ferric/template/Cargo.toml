@@ -1,0 +1,19 @@
+[package]
+edition = "2021"
+name = "<packageName>"
+version = "0.1.0"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+# For now, napi3 is the highest version of napi that is supported by Ferric
+napi = { version = "<napiCrateVersion>", default-features = false, features = ["napi3"] }
+napi-derive = "<napiDeriveCrateVersion>"
+
+[build-dependencies]
+napi-build = "<napiBuildCrateVersion>"
+
+[profile.release]
+lto = true
+strip = "symbols"
