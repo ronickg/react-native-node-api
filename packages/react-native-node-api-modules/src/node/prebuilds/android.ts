@@ -44,8 +44,7 @@ export async function createAndroidLibsDirectory({
   // Delete and recreate any existing output directory
   await fs.promises.rm(outputPath, { recursive: true, force: true });
   await fs.promises.mkdir(outputPath, { recursive: true });
-  for (const [triplet] of Object.entries(libraryPathByTriplet)) {
-    const libraryPath = libraryPathByTriplet[triplet as AndroidTriplet];
+  for (const [triplet, libraryPath] of Object.entries(libraryPathByTriplet)) {
     assert(
       fs.existsSync(libraryPath),
       `Library not found: ${libraryPath} for triplet ${triplet}`
