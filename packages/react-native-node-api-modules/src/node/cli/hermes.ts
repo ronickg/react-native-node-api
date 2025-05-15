@@ -1,12 +1,14 @@
+import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 
 import { Command } from "@commander-js/extra-typings";
 import { spawn, SpawnFailure } from "bufout";
 import { oraPromise } from "ora";
+import { packageDirectorySync } from "pkg-dir";
+
 import { prettyPath } from "../path-utils";
 
-const HERMES_PATH = path.resolve(__dirname, "../../../hermes");
 const HERMES_GIT_URL = "https://github.com/kraenhansen/hermes.git";
 const HERMES_GIT_TAG = "node-api-for-react-native-0.79.0";
 const REACT_NATIVE_DIR = path.dirname(
@@ -14,18 +16,22 @@ const REACT_NATIVE_DIR = path.dirname(
 );
 
 export const command = new Command("vendor-hermes")
+  .argument("[from]", "Path to a file inside the package", process.cwd())
   .option("--silent", "Don't print anything except the final path", false)
   .option(
     "--force",
     "Don't check timestamps of input files to skip unnecessary rebuilds",
     false
   )
-  .action(async ({ force, silent }) => {
+  .action(async (from, { force, silent }) => {
     try {
+      const packageRoot = packageDirectorySync({ cwd: from });
+      assert(packageRoot, "Failed to find package root");
+      const hermesPath = path.join(packageRoot, "hermes");
       if (force) {
-        fs.rmSync(HERMES_PATH, { recursive: true, force: true });
+        fs.rmSync(hermesPath, { recursive: true, force: true });
       }
-      if (!fs.existsSync(HERMES_PATH)) {
+      if (!fs.existsSync(hermesPath)) {
         await oraPromise(
           spawn(
             "git",
@@ -37,14 +43,14 @@ export const command = new Command("vendor-hermes")
               "--branch",
               HERMES_GIT_TAG,
               HERMES_GIT_URL,
-              HERMES_PATH,
+              hermesPath,
             ],
             {
               outputMode: "buffered",
             }
           ),
           {
-            text: `Cloning custom Hermes into ${prettyPath(HERMES_PATH)}`,
+            text: `Cloning custom Hermes into ${prettyPath(hermesPath)}`,
             successText: "Cloned custom Hermes",
             failText: (err) => `Failed to clone custom Hermes: ${err.message}`,
             isEnabled: !silent,
@@ -52,7 +58,7 @@ export const command = new Command("vendor-hermes")
         );
         await oraPromise(
           fs.promises.cp(
-            path.join(HERMES_PATH, "API/jsi/jsi"),
+            path.join(hermesPath, "API/jsi/jsi"),
             path.join(REACT_NATIVE_DIR, "ReactCommon/jsi/jsi/"),
             {
               recursive: true,
@@ -67,7 +73,7 @@ export const command = new Command("vendor-hermes")
           }
         );
       }
-      console.log(HERMES_PATH);
+      console.log(hermesPath);
     } catch (error) {
       if (error instanceof SpawnFailure) {
         error.flushOutput("both");
