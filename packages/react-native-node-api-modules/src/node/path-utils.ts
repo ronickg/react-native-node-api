@@ -208,9 +208,9 @@ export const MAGIC_FILENAME = "react-native-node-api-module";
  * Default patterns to use when excluding paths from the search for Node-API modules.
  */
 export const DEFAULT_EXCLUDE_PATTERNS = [
-  /\/react-native-node-api-modules\//,
-  /\/node_modules\//,
-  /\/.git\//,
+  /(?:^|\/)react-native-node-api-modules\//,
+  /(?:^|\/)node_modules\//,
+  /^.git\//,
 ];
 
 export function hasPlatformExtension(
@@ -258,7 +258,8 @@ export function findNodeApiModulePaths(
         return [candidatePath];
       } else if (file.isDirectory()) {
         // Traverse into the child directory
-        return findNodeApiModulePaths(options, path.join(suffix, file.name));
+        const nextSuffix = path.join(suffix, file.name);
+        return findNodeApiModulePaths(options, nextSuffix);
       }
       return [];
     });

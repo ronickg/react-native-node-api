@@ -256,6 +256,7 @@ describe("findNodeApiModulePaths", () => {
   it("respects default exclude patterns", (context) => {
     const tempDir = setupTempDirectory(context, {
       "root.apple.node/react-native-node-api-module": "",
+      "node_modules/direct-dep/lib.apple.node/react-native-node-api-module": "",
       "child-dir/dependency/lib.apple.node/react-native-node-api-module": "",
       "child-dir/node_modules/dependency/lib.apple.node/react-native-node-api-module":
         "",
