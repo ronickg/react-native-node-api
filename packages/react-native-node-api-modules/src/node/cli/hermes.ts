@@ -12,23 +12,28 @@ import { getLatestMtime, prettyPath } from "../path-utils";
 const HOST_PACKAGE_ROOT = path.resolve(__dirname, "../../..");
 const HERMES_GIT_URL = "https://github.com/kraenhansen/hermes.git";
 const HERMES_GIT_TAG = "node-api-for-react-native-0.79.0";
-const REACT_NATIVE_DIR = path.dirname(
-  require.resolve("react-native/package.json")
-);
 
 export const command = new Command("vendor-hermes")
-  .argument("[from]", "Path to a file inside the package", process.cwd())
+  .argument("[from]", "Path to a file inside the app package", process.cwd())
   .option("--silent", "Don't print anything except the final path", false)
   .option(
     "--force",
     "Don't check timestamps of input files to skip unnecessary rebuilds",
     false
   )
-  .action(async (from, { force, silent }) => {
+  .option(
+    "--use-app-root",
+    "Clone Hermes into the app root instead of the host package root",
+    false
+  )
+  .action(async (from, { force, silent, useAppRoot }) => {
     try {
-      const packageRoot = packageDirectorySync({ cwd: from });
-      assert(packageRoot, "Failed to find package root");
-      const hermesPath = path.join(packageRoot, "hermes");
+      const appPackageRoot = packageDirectorySync({ cwd: from });
+      assert(appPackageRoot, "Failed to find package root");
+      const hermesPath = path.join(
+        useAppRoot ? appPackageRoot : HOST_PACKAGE_ROOT,
+        "hermes"
+      );
       if (force && fs.existsSync(hermesPath)) {
         await oraPromise(
           fs.promises.rm(hermesPath, { recursive: true, force: true }),
