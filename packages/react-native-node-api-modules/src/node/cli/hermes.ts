@@ -7,8 +7,9 @@ import { spawn, SpawnFailure } from "bufout";
 import { oraPromise } from "ora";
 import { packageDirectorySync } from "pkg-dir";
 
-import { prettyPath } from "../path-utils";
+import { getLatestMtime, prettyPath } from "../path-utils";
 
+const HOST_PACKAGE_ROOT = path.resolve(__dirname, "../../..");
 const HERMES_GIT_URL = "https://github.com/kraenhansen/hermes.git";
 const HERMES_GIT_TAG = "node-api-for-react-native-0.79.0";
 const REACT_NATIVE_DIR = path.dirname(
@@ -65,14 +66,28 @@ export const command = new Command("vendor-hermes")
             isEnabled: !silent,
           }
         );
+      }
+      const hermesJsiPath = path.join(hermesPath, "API/jsi/jsi");
+      const reactNativePath = path.dirname(
+        require.resolve("react-native/package.json", {
+          // Ensures we'll be patching the React Native package actually used by the app
+          paths: [appPackageRoot],
+        })
+      );
+      const reactNativeJsiPath = path.join(
+        reactNativePath,
+        "ReactCommon/jsi/jsi/"
+      );
+
+      if (
+        fs.existsSync(reactNativeJsiPath) &&
+        (force ||
+          getLatestMtime(hermesJsiPath) > getLatestMtime(reactNativeJsiPath))
+      ) {
         await oraPromise(
-          fs.promises.cp(
-            path.join(hermesPath, "API/jsi/jsi"),
-            path.join(REACT_NATIVE_DIR, "ReactCommon/jsi/jsi/"),
-            {
-              recursive: true,
-            }
-          ),
+          fs.promises.cp(hermesJsiPath, reactNativeJsiPath, {
+            recursive: true,
+          }),
           {
             text: `Copying JSI from Hermes to React Native`,
             successText: "Copied JSI from Hermes to React Native",
