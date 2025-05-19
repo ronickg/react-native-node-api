@@ -14,6 +14,10 @@ import {
   isAppleTarget,
 } from "./targets.js";
 
+const WEAK_NODE_API_PATH = new URL(
+  import.meta.resolve("react-native-node-api-modules/weak-node-api")
+).pathname;
+
 const APPLE_XCFRAMEWORK_CHILDS_PER_TARGET: Record<AppleTargetName, string> = {
   "aarch64-apple-darwin": "macos-arm64_x86_64", // Universal
   "x86_64-apple-darwin": "macos-arm64_x86_64", // Universal
@@ -26,6 +30,13 @@ const APPLE_XCFRAMEWORK_CHILDS_PER_TARGET: Record<AppleTargetName, string> = {
   // "aarch64-apple-tvos-sim": "tvos-arm64-simulator",
   // "aarch64-apple-visionos": "xros-arm64",
   // "aarch64-apple-visionos-sim": "xros-arm64-simulator",
+};
+
+const ANDROID_ARCH_PR_TARGET: Record<AndroidTargetName, string> = {
+  "aarch64-linux-android": "arm64-v8a",
+  "armv7-linux-androideabi": "armeabi-v7a",
+  "i686-linux-android": "x86",
+  "x86_64-linux-android": "x86_64",
 };
 
 export function joinPathAndAssertExistence(...pathSegments: string[]) {
@@ -114,14 +125,20 @@ export function getTargetAndroidPlatform(target: AndroidTargetName) {
 }
 
 export function getWeakNodeApiFrameworkPath(target: AppleTargetName) {
-  const weakNodeApiPath = new URL(
-    import.meta.resolve("react-native-node-api-modules/weak-node-api")
-  ).pathname;
-  assert(fs.existsSync(weakNodeApiPath), "Expected weak-node-api to exist");
+  assert(fs.existsSync(WEAK_NODE_API_PATH), "Expected weak-node-api to exist");
   return joinPathAndAssertExistence(
-    weakNodeApiPath,
-    "libweak-node-api.xcframework",
+    WEAK_NODE_API_PATH,
+    "weak-node-api.xcframework",
     APPLE_XCFRAMEWORK_CHILDS_PER_TARGET[target]
+  );
+}
+
+export function getWeakNodeApiAndroidLibraryPath(target: AndroidTargetName) {
+  assert(fs.existsSync(WEAK_NODE_API_PATH), "Expected weak-node-api to exist");
+  return joinPathAndAssertExistence(
+    WEAK_NODE_API_PATH,
+    "weak-node-api.android.node",
+    ANDROID_ARCH_PR_TARGET[target]
   );
 }
 
@@ -149,8 +166,15 @@ export function getTargetEnvironmentVariables({
     const toolchainBinPath = getLLVMToolchainBinPath(ndkPath);
     const targetArch = getTargetAndroidArch(target);
     const targetPlatform = getTargetAndroidPlatform(target);
+    const weakNodeApiPath = getWeakNodeApiAndroidLibraryPath(target);
 
     return {
+      CARGO_ENCODED_RUSTFLAGS: [
+        "-L",
+        weakNodeApiPath,
+        "-l",
+        "weak-node-api",
+      ].join(String.fromCharCode(0x1f)),
       CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER: joinPathAndAssertExistence(
         toolchainBinPath,
         `aarch64-linux-android${androidApiLevel}-clang`
@@ -186,7 +210,12 @@ export function getTargetEnvironmentVariables({
   } else if (isAppleTarget(target)) {
     const weakNodeApiFrameworkPath = getWeakNodeApiFrameworkPath(target);
     return {
-      RUSTFLAGS: `-L framework=${weakNodeApiFrameworkPath} -l framework=libweak-node-api`,
+      CARGO_ENCODED_RUSTFLAGS: [
+        "-L",
+        `framework=${weakNodeApiFrameworkPath}`,
+        "-l",
+        "framework=weak-node-api",
+      ].join(String.fromCharCode(0x1f)),
     };
   } else {
     throw new Error(`Unexpected target: ${target}`);
