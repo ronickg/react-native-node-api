@@ -167,11 +167,12 @@ CxxNodeApiHostModule::requireNodeAddon(jsi::Runtime &rt,
   const auto [pathPrefix, strippedPath] = rpartition(requiredPath, ':');
   if (!pathPrefix.empty()) {
     // URL protocol or prefix detected, dispatch via custom resolver
-    if (auto handler = prefixResolvers_.find(pathPrefix); prefixResolvers_.end() != handler) {
+    std::string pathPrefixCopy(pathPrefix); // HACK: Need explicit cast to `std::string`
+    if (auto handler = prefixResolvers_.find(pathPrefixCopy); prefixResolvers_.end() != handler) {
       // HACK: Smuggle the `pathPrefix` as new `requiredPackageName`
       return (handler->second)(rt, strippedPath, pathPrefix, requiredFrom);
     } else {
-      throw jsi::JSError(rt, "Unsupported protocol or prefix \"" + pathPrefix + "\". Have you registered it?");
+      throw jsi::JSError(rt, "Unsupported protocol or prefix \"" + pathPrefixCopy + "\". Have you registered it?");
     }
   }
 
