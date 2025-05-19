@@ -1,7 +1,6 @@
 #include <utility>      // std::move, std::pair, std::make_pair
 #include <vector>       // std::vector
 #include <string>       // std::string
-#include <string_view>  // std::string_view
 #include <algorithm>    // std::all_of
 #include <cctype>       // std::isalnum
 #include "CxxNodeApiHostModule.hpp"
