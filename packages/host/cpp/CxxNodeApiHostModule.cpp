@@ -1,7 +1,102 @@
+#include <utility>      // std::move, std::pair, std::make_pair
+#include <vector>       // std::vector
+#include <string>       // std::string
+#include <string_view>  // std::string_view
 #include "CxxNodeApiHostModule.hpp"
 #include "Logger.hpp"
 
 using namespace facebook;
+
+namespace {
+
+// NOTE: behaves like `explode()` in PHP
+std::vector<std::string_view> explodePath(const std::string_view &path) {
+  std::vector<std::string_view> parts;
+  for (size_t pos = 0; std::string_view::npos != pos; /* no-op */) {
+    if (const size_t nextPos = path.find('/', pos); std::string_view::npos != nextPos) {
+      parts.emplace_back(path.substr(pos, nextPos - pos));
+      pos = nextPos + 1;
+    } else {
+      if (std::string_view &&part = path.substr(pos); !part.empty()) {
+        // Paths ending with `/` are as if there was a tailing dot `/.`
+        // therefore the last `/` can be safely removed
+        parts.emplace_back(part);
+      }
+      break;
+    }
+  }
+  return parts;
+}
+
+// NOTE: Absolute paths would have the first part empty, relative would have a name
+std::string implodePath(const std::vector<std::string_view> &parts) {
+  std::string joinedPath;
+  for (size_t i = 0; i < parts.size(); ++i) {
+    if (i > 0) {
+      joinedPath += '/';
+    }
+    joinedPath += parts[i];
+  }
+  return joinedPath;
+}
+
+// NOTE: Returned path does not include the `/` at the end of the string
+// NOTE: For some cases this cannot be a view: `getParentPath("..")` => "../.."
+void makeParentPathInplace(std::vector<std::string_view> &parts) {
+  if (!parts.empty() && ".." != parts.back()) {
+    const bool wasDot = "." == parts.back();
+    parts.pop_back();
+    if (wasDot && parts.empty()) {
+      parts.emplace_back("..");
+    }
+  } else {
+    parts.emplace_back("..");
+  }
+}
+
+std::vector<std::string_view> simplifyPath(const std::vector<std::string_view> &parts) {
+  std::vector<std::string_view> result;
+  if (!parts.empty()) {
+    for (const auto &part : parts) {
+      if ("." == part && !result.empty()) {
+        continue; // We only allow for a single `./` at the beginning
+      } else if (".." == part) {
+        makeParentPathInplace(result);
+      } else {
+        result.emplace_back(part);
+      }
+    }
+  } else {
+    result.emplace_back("."); // Empty path is as if it was "."
+  }
+  return result;
+}
+
+std::string joinPath(const std::string_view &baseDir, const std::string_view &rest) {
+  auto pathComponents = simplifyPath(explodePath(baseDir));
+  auto restComponents = simplifyPath(explodePath(rest));
+  for (auto &&part : restComponents) {
+    if (".." == part) {
+      makeParentPathInplace(pathComponents);
+    } else if (!part.empty() && "." != part) {
+      pathComponents.emplace_back(part);
+    }
+  }
+  return implodePath(pathComponents);
+}
+
+std::pair<std::string_view, std::string_view>
+rpartition(const std::string_view &input, char delimiter) {
+  if (const size_t pos = input.find_last_of(delimiter); std::string_view::npos != pos) {
+    const auto head = std::string_view(input).substr(0, pos);
+    const auto tail = std::string_view(input).substr(pos + 1);
+    return std::make_pair(head, tail);
+  } else {
+    return std::make_pair(std::string_view(), input);
+  }
+}
+
+} // namespace
 
 namespace callstack::nodeapihost {
 
