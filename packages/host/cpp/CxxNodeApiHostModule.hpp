@@ -42,6 +42,7 @@ protected:
     std::string generatedName;
   };
   std::unordered_map<std::string, NodeAddon> nodeAddons_;
+  std::unordered_map<std::string, ResolverFunc> prefixResolvers_;
   using LoaderPolicy = PosixLoader; // FIXME: HACK: This is temporary workaround
                                     // for my lazyness (work on iOS and Android)
 
