@@ -17,18 +17,34 @@ CxxNodeApiHostModule::requireNodeAddon(jsi::Runtime &rt,
                                        react::TurboModule &turboModule,
                                        const jsi::Value args[], size_t count) {
   auto &thisModule = static_cast<CxxNodeApiHostModule &>(turboModule);
-  if (1 == count && args[0].isString()) {
-    return thisModule.requireNodeAddon(rt, args[0].asString(rt));
+  if (3 == count) {
+    // Must be `requireNodeAddon(requiredPath: string, requiredPackageName: string, requiredFrom: string)`
+    return thisModule.requireNodeAddon(rt,
+        args[0].asString(rt),
+        args[1].asString(rt),
+        args[2].asString(rt));
   }
-  // TODO: Throw a meaningful error
-  return jsi::Value::undefined();
+  throw jsi::JSError(rt, "Invalid number of arguments to requireNodeAddon()");
 }
 
 jsi::Value
 CxxNodeApiHostModule::requireNodeAddon(jsi::Runtime &rt,
-                                       const jsi::String libraryName) {
-  const std::string libraryNameStr = libraryName.utf8(rt);
+                                       const jsi::String &requiredPath,
+                                       const jsi::String &requiredPackageName,
+                                       const jsi::String &requiredFrom) {
+  return requireNodeAddon(rt,
+      requiredPath.utf8(rt),
+      requiredPackageName.utf8(rt),
+      requiredFrom.utf8(rt));
+}
 
+jsi::Value
+CxxNodeApiHostModule::requireNodeAddon(jsi::Runtime &rt,
+                                       const std::string &requiredPath,
+                                       const std::string &requiredPackageName,
+                                       const std::string &requiredFrom) {
+
+  const std::string &libraryNameStr = requiredPath;
   auto [it, inserted] = nodeAddons_.emplace(libraryNameStr, NodeAddon());
   NodeAddon &addon = it->second;
 
