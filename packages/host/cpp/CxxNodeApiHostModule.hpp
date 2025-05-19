@@ -35,6 +35,11 @@ public:
                                         const std::string &requiredPackageName,
                                         const std::string &requiredFrom);
 
+  facebook::jsi::Value resolveRelativePath(facebook::jsi::Runtime &rt,
+                                           const std::string_view &requiredPath,
+                                           const std::string_view &requiredPackageName,
+                                           const std::string_view &requiredFrom);
+
 protected:
   struct NodeAddon {
     void *moduleHandle;

@@ -172,7 +172,16 @@ CxxNodeApiHostModule::requireNodeAddon(jsi::Runtime &rt,
     return (handler->second)(rt, strippedPath, requiredPackageName, requiredFrom);
   }
 
-  const std::string &libraryNameStr = strippedPath;
+  // Otherwise, "requiredPath" must be a "relative specifier" or a "bare specifier"
+  return resolveRelativePath(rt, strippedPath, requiredPackageName, requiredFrom);
+}
+
+jsi::Value
+CxxNodeApiHostModule::resolveRelativePath(facebook::jsi::Runtime &rt,
+                                          const std::string_view &requiredPath,
+                                          const std::string_view &requiredPackageName,
+                                          const std::string_view &requiredFrom) {
+  const std::string libraryNameStr(requiredPath);
   auto [it, inserted] = nodeAddons_.emplace(libraryNameStr, NodeAddon());
   NodeAddon &addon = it->second;
 
