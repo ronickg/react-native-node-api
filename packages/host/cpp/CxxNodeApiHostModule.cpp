@@ -2,12 +2,21 @@
 #include <vector>       // std::vector
 #include <string>       // std::string
 #include <string_view>  // std::string_view
+#include <algorithm>    // std::all_of
+#include <cctype>       // std::isalnum
 #include "CxxNodeApiHostModule.hpp"
 #include "Logger.hpp"
 
 using namespace facebook;
 
 namespace {
+
+bool isModulePathLike(const std::string_view &path) {
+  return std::all_of(path.begin(), path.end(), [](unsigned char c) {
+    return std::isalnum(c) || '_' == c || '-' == c
+        || '.' == c || '/' == c || ':' == c;
+  });
+}
 
 // NOTE: behaves like `explode()` in PHP
 std::vector<std::string_view> explodePath(const std::string_view &path) {
@@ -138,6 +147,13 @@ CxxNodeApiHostModule::requireNodeAddon(jsi::Runtime &rt,
                                        const std::string &requiredPath,
                                        const std::string &requiredPackageName,
                                        const std::string &requiredFrom) {
+  // Ensure that user-supplied inputs contain only allowed characters
+  if (!isModulePathLike(requiredPath)) {
+    throw jsi::JSError(rt, "Invalid characters in `requiredPath`. Only ASCII alphanumerics are allowed.");
+  }
+  if (!isModulePathLike(requiredFrom)) {
+    throw jsi::JSError(rt, "Invalid characters in `requiredFrom`. Only ASCII alphanumerics are allowed.");
+  }
 
   const std::string &libraryNameStr = requiredPath;
   auto [it, inserted] = nodeAddons_.emplace(libraryNameStr, NodeAddon());
