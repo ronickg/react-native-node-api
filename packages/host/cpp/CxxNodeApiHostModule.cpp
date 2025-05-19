@@ -190,6 +190,15 @@ CxxNodeApiHostModule::resolveRelativePath(facebook::jsi::Runtime &rt,
                                           const std::string_view &requiredPath,
                                           const std::string_view &requiredPackageName,
                                           const std::string_view &requiredFrom) {
+  // "Rebase" the relative path to get a proper package-relative path
+  const std::string mergedSubpath = joinPath(requiredFrom, requiredPath);
+  if (!isModulePathLike(mergedSubpath)) {
+    throw jsi::JSError(rt, "Computed subpath is invalid. Check `requiredPath` and `requiredFrom`.");
+  }
+  if (!startsWith(mergedSubpath, "./")) {
+    throw jsi::JSError(rt, "Subpath must be relative and cannot leave its package root.");
+  }
+
   const std::string libraryNameStr(requiredPath);
   auto [it, inserted] = nodeAddons_.emplace(libraryNameStr, NodeAddon());
   NodeAddon &addon = it->second;
