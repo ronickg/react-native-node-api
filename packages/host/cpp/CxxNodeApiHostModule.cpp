@@ -166,6 +166,12 @@ CxxNodeApiHostModule::requireNodeAddon(jsi::Runtime &rt,
     }
   }
 
+  // Check, if this package has been overridden
+  if (auto handler = packageOverrides_.find(requiredPackageName); packageOverrides_.end() != handler) {
+    // This package has a custom resolver, invoke it
+    return (handler->second)(rt, strippedPath, requiredPackageName, requiredFrom);
+  }
+
   const std::string &libraryNameStr = strippedPath;
   auto [it, inserted] = nodeAddons_.emplace(libraryNameStr, NodeAddon());
   NodeAddon &addon = it->second;
