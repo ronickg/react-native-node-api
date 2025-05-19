@@ -13,8 +13,7 @@ export type PlatformName = "android" | "apple";
 
 export const PLATFORM_EXTENSIONS = {
   android: ".android.node",
-  // TODO: Change to .apple.node
-  apple: ".xcframework",
+  apple: ".apple.node",
 } as const satisfies Record<PlatformName, string>;
 export type PlatformExtentions = (typeof PLATFORM_EXTENSIONS)[PlatformName];
 
@@ -69,17 +68,6 @@ export function stripExtension(modulePath: string) {
     },
     modulePath
   );
-}
-
-/**
- * Replaces any platform specific extensions with the common .node extension.
- */
-export function replaceWithNodeExtension(modulePath: string) {
-  return path.format({
-    ...path.parse(modulePath),
-    base: undefined,
-    ext: ".node",
-  });
 }
 
 export type ModuleContext = {

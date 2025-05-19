@@ -9,7 +9,6 @@ import {
   findPackageDependencyPaths,
   getLibraryName,
   isNodeApiModule,
-  replaceWithNodeExtension,
   stripExtension,
 } from "./path-utils.js";
 import { setupTempDirectory } from "./test-utils.js";
@@ -17,8 +16,7 @@ import { setupTempDirectory } from "./test-utils.js";
 describe("isNodeApiModule", () => {
   it("returns true for .node", (context) => {
     const tempDirectoryPath = setupTempDirectory(context, {
-      "addon.xcframework/addon.node":
-        "// This is supposted to be a binary file",
+      "addon.apple.node/addon.node": "// This is supposted to be a binary file",
     });
 
     assert(isNodeApiModule(path.join(tempDirectoryPath, "addon")));
@@ -64,9 +62,9 @@ describe("isNodeApiModule", () => {
     assert.equal(isNodeApiModule(fakePath), false);
   });
 
-  it("recognize .xcframeworks", (context) => {
+  it("recognize .apple.node directories", (context) => {
     const tempDirectoryPath = setupTempDirectory(context, {
-      "addon.xcframework/addon.node": "// This is supposed to be a binary file",
+      "addon.apple.node/addon.node": "// This is supposed to be a binary file",
     });
     assert.equal(isNodeApiModule(path.join(tempDirectoryPath, "addon")), true);
     assert.equal(
@@ -79,7 +77,7 @@ describe("isNodeApiModule", () => {
   it("throws when one module unreadable but another readable", (context) => {
     const tempDirectoryPath = setupTempDirectory(context, {
       "addon.android.node": "",
-      "addon.xcframework": "",
+      "addon.apple.node": "",
     });
     const unreadable = path.join(tempDirectoryPath, "addon.android.node");
     // only android module is unreadable
@@ -98,18 +96,7 @@ describe("stripExtension", () => {
     assert.equal(stripExtension("./addon.node"), "./addon");
     assert.equal(stripExtension("./addon.android.node"), "./addon");
     // assert.equal(stripExtension("./addon.apple.node"), "./addon");
-    assert.equal(stripExtension("./addon.xcframework"), "./addon");
-  });
-});
-
-describe("replaceExtensionWithNode", () => {
-  it("replaces extension with .node", () => {
-    assert.equal(replaceWithNodeExtension("./addon"), "./addon.node");
-    assert.equal(replaceWithNodeExtension("./addon.node"), "./addon.node");
-    assert.equal(
-      replaceWithNodeExtension("./addon.xcframework"),
-      "./addon.node"
-    );
+    assert.equal(stripExtension("./addon.apple.node"), "./addon");
   });
 });
 
@@ -172,8 +159,8 @@ describe("getLibraryName", () => {
   it("works when including relative path", (context) => {
     const tempDirectoryPath = setupTempDirectory(context, {
       "package.json": `{ "name": "my-package" }`,
-      "addon.xcframework/addon.node": "// This is supposed to be a binary file",
-      "sub-directory/addon.xcframework/addon.node":
+      "addon.apple.node/addon.node": "// This is supposed to be a binary file",
+      "sub-directory/addon.apple.node/addon.node":
         "// This is supposed to be a binary file",
     });
     assert.equal(
@@ -194,8 +181,8 @@ describe("getLibraryName", () => {
   it("works when stripping relative path", (context) => {
     const tempDirectoryPath = setupTempDirectory(context, {
       "package.json": `{ "name": "my-package" }`,
-      "addon.xcframework/addon.node": "// This is supposed to be a binary file",
-      "sub-directory/addon.xcframework/addon.node":
+      "addon.apple.node/addon.node": "// This is supposed to be a binary file",
+      "sub-directory/addon.apple.node/addon.node":
         "// This is supposed to be a binary file",
     });
     assert.equal(
@@ -249,28 +236,28 @@ describe("findPackageDependencyPaths", () => {
 });
 
 describe("findNodeApiModulePaths", () => {
-  it("should find xcframework paths", (context) => {
+  it("should find .apple.node paths", (context) => {
     const tempDir = setupTempDirectory(context, {
-      "root.xcframework/react-native-node-api-module": "",
-      "sub-directory/lib-a.xcframework/react-native-node-api-module": "",
-      "sub-directory/lib-b.xcframework/react-native-node-api-module": "",
+      "root.apple.node/react-native-node-api-module": "",
+      "sub-directory/lib-a.apple.node/react-native-node-api-module": "",
+      "sub-directory/lib-b.apple.node/react-native-node-api-module": "",
     });
     const result = findNodeApiModulePaths({
       fromPath: tempDir,
       platform: "apple",
     });
     assert.deepEqual(result.sort(), [
-      path.join(tempDir, "root.xcframework"),
-      path.join(tempDir, "sub-directory/lib-a.xcframework"),
-      path.join(tempDir, "sub-directory/lib-b.xcframework"),
+      path.join(tempDir, "root.apple.node"),
+      path.join(tempDir, "sub-directory/lib-a.apple.node"),
+      path.join(tempDir, "sub-directory/lib-b.apple.node"),
     ]);
   });
 
   it("respects default exclude patterns", (context) => {
     const tempDir = setupTempDirectory(context, {
-      "root.xcframework/react-native-node-api-module": "",
-      "child-dir/dependency/lib.xcframework/react-native-node-api-module": "",
-      "child-dir/node_modules/dependency/lib.xcframework/react-native-node-api-module":
+      "root.apple.node/react-native-node-api-module": "",
+      "child-dir/dependency/lib.apple.node/react-native-node-api-module": "",
+      "child-dir/node_modules/dependency/lib.apple.node/react-native-node-api-module":
         "",
     });
     const result = findNodeApiModulePaths({
@@ -278,16 +265,16 @@ describe("findNodeApiModulePaths", () => {
       platform: "apple",
     });
     assert.deepEqual(result.sort(), [
-      path.join(tempDir, "child-dir/dependency/lib.xcframework"),
-      path.join(tempDir, "root.xcframework"),
+      path.join(tempDir, "child-dir/dependency/lib.apple.node"),
+      path.join(tempDir, "root.apple.node"),
     ]);
   });
 
   it("respects explicit exclude patterns", (context) => {
     const tempDir = setupTempDirectory(context, {
-      "root.xcframework/react-native-node-api-module": "",
-      "child-dir/dependency/lib.xcframework/react-native-node-api-module": "",
-      "child-dir/node_modules/dependency/lib.xcframework/react-native-node-api-module":
+      "root.apple.node/react-native-node-api-module": "",
+      "child-dir/dependency/lib.apple.node/react-native-node-api-module": "",
+      "child-dir/node_modules/dependency/lib.apple.node/react-native-node-api-module":
         "",
     });
     const result = findNodeApiModulePaths({
@@ -296,15 +283,15 @@ describe("findNodeApiModulePaths", () => {
       excludePatterns: [/root/],
     });
     assert.deepEqual(result.sort(), [
-      path.join(tempDir, "child-dir/dependency/lib.xcframework"),
-      path.join(tempDir, "child-dir/node_modules/dependency/lib.xcframework"),
+      path.join(tempDir, "child-dir/dependency/lib.apple.node"),
+      path.join(tempDir, "child-dir/node_modules/dependency/lib.apple.node"),
     ]);
   });
 
   it("disregards parts futher up in filesystem when excluding", (context) => {
     const tempDir = setupTempDirectory(context, {
-      "node_modules/root.xcframework/react-native-node-api-module": "",
-      "node_modules/child-dir/node_modules/dependency/lib.xcframework/react-native-node-api-module":
+      "node_modules/root.apple.node/react-native-node-api-module": "",
+      "node_modules/child-dir/node_modules/dependency/lib.apple.node/react-native-node-api-module":
         "",
     });
     const result = findNodeApiModulePaths({
@@ -312,7 +299,7 @@ describe("findNodeApiModulePaths", () => {
       platform: "apple",
     });
     assert.deepEqual(result, [
-      path.join(tempDir, "node_modules/root.xcframework"),
+      path.join(tempDir, "node_modules/root.apple.node"),
     ]);
   });
 });
@@ -323,7 +310,7 @@ describe("determineModuleContext", () => {
       "package.json": `{ "name": "cached-pkg" }`,
       "subdir1/file1.node": "",
       "subdir2/file2.node": "",
-      "subdir1/file1.xcframework": "",
+      "subdir1/file1.apple.node": "",
     });
     let readCount = 0;
     const orig = fs.readFileSync;
