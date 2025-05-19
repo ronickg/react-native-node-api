@@ -71,6 +71,12 @@ void makeParentPathInplace(std::vector<std::string_view> &parts) {
   }
 }
 
+std::vector<std::string_view> makeParentPath(const std::string_view &path) {
+  auto parts = explodePath(path);
+  makeParentPathInplace(parts);
+  return parts;
+}
+
 std::vector<std::string_view> simplifyPath(const std::vector<std::string_view> &parts) {
   std::vector<std::string_view> result;
   if (!parts.empty()) {
@@ -89,9 +95,10 @@ std::vector<std::string_view> simplifyPath(const std::vector<std::string_view> &
   return result;
 }
 
-std::string joinPath(const std::string_view &baseDir, const std::string_view &rest) {
-  auto pathComponents = simplifyPath(explodePath(baseDir));
-  auto restComponents = simplifyPath(explodePath(rest));
+std::vector<std::string_view> joinPath(const std::vector<std::string_view> &baseDir,
+                                       const std::vector<std::string_view> &rest) {
+  auto pathComponents = simplifyPath(baseDir);
+  auto restComponents = simplifyPath(rest);
   for (auto &&part : restComponents) {
     if (".." == part) {
       makeParentPathInplace(pathComponents);
@@ -99,7 +106,7 @@ std::string joinPath(const std::string_view &baseDir, const std::string_view &re
       pathComponents.emplace_back(part);
     }
   }
-  return implodePath(pathComponents);
+  return pathComponents;
 }
 
 std::pair<std::string_view, std::string_view>
@@ -192,7 +199,9 @@ CxxNodeApiHostModule::resolveRelativePath(facebook::jsi::Runtime &rt,
                                           const std::string_view &requiredPackageName,
                                           const std::string_view &requiredFrom) {
   // "Rebase" the relative path to get a proper package-relative path
-  const std::string mergedSubpath = joinPath(requiredFrom, requiredPath);
+  const auto requiredFromDirParts = makeParentPath(requiredFrom);
+  const auto requiredPathParts = explodePath(requiredPath);
+  const std::string mergedSubpath = implodePath(joinPath(requiredFromDirParts, requiredPathParts));
   if (!isModulePathLike(mergedSubpath)) {
     throw jsi::JSError(rt, "Computed subpath is invalid. Check `requiredPath` and `requiredFrom`.");
   }
