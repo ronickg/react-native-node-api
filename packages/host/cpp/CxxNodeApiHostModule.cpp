@@ -1,7 +1,7 @@
 #include <utility>      // std::move, std::pair, std::make_pair
 #include <vector>       // std::vector
 #include <string>       // std::string
-#include <algorithm>    // std::all_of
+#include <algorithm>    // std::equal, std::all_of
 #include <cctype>       // std::isalnum
 #include "CxxNodeApiHostModule.hpp"
 #include "Logger.hpp"
@@ -9,6 +9,15 @@
 using namespace facebook;
 
 namespace {
+
+bool startsWith(const std::string &str, const std::string &prefix) {
+#if __cplusplus >= 202002L // __cpp_lib_starts_ends_with
+  return str.starts_with(prefix);
+#else
+  return str.size() >= prefix.size()
+      && std::equal(prefix.begin(), prefix.end(), str.begin());
+#endif // __cplusplus >= 202002L
+}
 
 bool isModulePathLike(const std::string_view &path) {
   return std::all_of(path.begin(), path.end(), [](unsigned char c) {
