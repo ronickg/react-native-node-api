@@ -308,4 +308,19 @@ bool CxxNodeApiHostModule::initializeNodeModule(jsi::Runtime &rt,
   return true;
 }
 
+std::pair<jsi::Value, bool>
+CxxNodeApiHostModule::lookupRequireCache(::jsi::Runtime &rt,
+                   const std::string_view &packageName,
+                   const std::string_view &subpath) {
+  // TODO: Implement me
+  return std::make_pair(jsi::Value(), false);
+}
+
+void CxxNodeApiHostModule::updateRequireCache(jsi::Runtime &rt,
+                                              const std::string_view &packageName,
+                                              const std::string_view &subpath,
+                                              jsi::Value &value) {
+  // TODO: Implement me
+}
+
 } // namespace callstack::nodeapihost

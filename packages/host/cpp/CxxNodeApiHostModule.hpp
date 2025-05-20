@@ -40,6 +40,15 @@ public:
                                            const std::string_view &requiredPackageName,
                                            const std::string_view &requiredFrom);
 
+  std::pair<facebook::jsi::Value, bool>
+  lookupRequireCache(facebook::jsi::Runtime &rt,
+                     const std::string_view &packageName,
+                     const std::string_view &subpath);
+  void updateRequireCache(facebook::jsi::Runtime &rt,
+                          const std::string_view &packageName,
+                          const std::string_view &subpath,
+                          facebook::jsi::Value &value);
+
 protected:
   struct NodeAddon {
     void *moduleHandle;
