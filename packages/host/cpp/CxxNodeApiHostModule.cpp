@@ -209,24 +209,35 @@ CxxNodeApiHostModule::resolveRelativePath(facebook::jsi::Runtime &rt,
     throw jsi::JSError(rt, "Subpath must be relative and cannot leave its package root.");
   }
 
-  const std::string libraryNameStr(requiredPath);
-  auto [it, inserted] = nodeAddons_.emplace(libraryNameStr, NodeAddon());
-  NodeAddon &addon = it->second;
+  // Check whether (`requiredPackageName`, `mergedSubpath`) is already cached
+  // NOTE: Cache must to be `jsi::Runtime`-local
+  auto [exports, isCached] = lookupRequireCache(rt,
+                                                requiredPackageName,
+                                                mergedSubpath);
 
-  // Check if this module has been loaded already, if not then load it...
-  if (inserted) {
-    if (!loadNodeAddon(addon, libraryNameStr)) {
-      return jsi::Value::undefined();
+  if (!isCached) {
+    const std::string libraryNameStr(requiredPath);
+    auto [it, inserted] = nodeAddons_.emplace(libraryNameStr, NodeAddon());
+    NodeAddon &addon = it->second;
+
+    // Check if this module has been loaded already, if not then load it...
+    if (inserted) {
+      if (!loadNodeAddon(addon, libraryNameStr)) {
+        return jsi::Value::undefined();
+      }
     }
+
+    // Initialize the addon if it has not already been initialized
+    if (!rt.global().hasProperty(rt, addon.generatedName.data())) {
+      initializeNodeModule(rt, addon);
+    }
+
+    // Look up the exports (using JSI), add to cache and return
+    exports = rt.global().getProperty(rt, addon.generatedName.data());
+    updateRequireCache(rt, requiredPackageName, mergedSubpath, exports);
   }
 
-  // Initialize the addon if it has not already been initialized
-  if (!rt.global().hasProperty(rt, addon.generatedName.data())) {
-    initializeNodeModule(rt, addon);
-  }
-
-  // Look the exports up (using JSI) and return it...
-  return rt.global().getProperty(rt, addon.generatedName.data());
+  return std::move(exports);
 }
 
 bool CxxNodeApiHostModule::loadNodeAddon(NodeAddon &addon,
