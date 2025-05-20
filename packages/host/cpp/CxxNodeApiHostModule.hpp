@@ -19,8 +19,6 @@ public:
                    facebook::react::TurboModule &turboModule,
                    const facebook::jsi::Value args[], size_t count);
   facebook::jsi::Value requireNodeAddon(facebook::jsi::Runtime &rt,
-                                        const facebook::jsi::String path);
-  facebook::jsi::Value requireNodeAddon(facebook::jsi::Runtime &rt,
                                         const facebook::jsi::String &requiredPath,
                                         const facebook::jsi::String &requiredPackageName,
                                         const facebook::jsi::String &requiredFrom);
