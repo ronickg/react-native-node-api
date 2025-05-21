@@ -131,7 +131,7 @@ CxxNodeApiHostModule::CxxNodeApiHostModule(
     std::shared_ptr<react::CallInvoker> jsInvoker)
     : TurboModule(CxxNodeApiHostModule::kModuleName, jsInvoker) {
   methodMap_["requireNodeAddon"] =
-      MethodMetadata{1, &CxxNodeApiHostModule::requireNodeAddon};
+      MethodMetadata{3, &CxxNodeApiHostModule::requireNodeAddon};
 }
 
 jsi::Value
