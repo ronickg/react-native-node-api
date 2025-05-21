@@ -50,19 +50,8 @@ public:
                           facebook::jsi::Value &value);
 
 protected:
-  struct NodeAddon {
-    void *moduleHandle;
-    napi_addon_register_func init;
-    std::string generatedName;
-  };
-  std::unordered_map<std::string, NodeAddon> nodeAddons_;
   std::unordered_map<std::string, ResolverFunc> prefixResolvers_;
   std::unordered_map<std::string, ResolverFunc> packageOverrides_;
-  using LoaderPolicy = PosixLoader; // FIXME: HACK: This is temporary workaround
-                                    // for my lazyness (work on iOS and Android)
-
-  bool loadNodeAddon(NodeAddon &addon, const std::string &path) const;
-  bool initializeNodeModule(facebook::jsi::Runtime &rt, NodeAddon &addon);
 };
 
 } // namespace callstack::nodeapihost
