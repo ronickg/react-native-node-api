@@ -30,6 +30,7 @@ public:
 
   NodeAddon& loadAddon(std::string packageName, std::string subpath);
   facebook::jsi::Value instantiateAddonInRuntime(facebook::jsi::Runtime &rt, NodeAddon &addon);
+  bool handleOldNapiModuleRegister(napi_addon_register_func addonInitFunc);
 
   using LoaderPolicy = PosixLoader; // FIXME: HACK: This is temporary workaround
                                     // for my lazyness (works on iOS and Android)
@@ -41,6 +42,7 @@ private:
 
   static constexpr const char *kInternalRegistryKey = "$NodeApiHost";
   std::unordered_map<std::string, NodeAddon> trackedAddons_;
+  napi_addon_register_func pendingRegistration_;
 };
 
 } // namespace callstack::nodeapihost

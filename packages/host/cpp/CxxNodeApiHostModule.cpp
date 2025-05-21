@@ -248,4 +248,11 @@ void CxxNodeApiHostModule::updateRequireCache(jsi::Runtime &rt,
   // TODO: Implement me
 }
 
+extern "C" {
+NAPI_EXTERN void NAPI_CDECL napi_module_register(napi_module *mod) {
+  assert(NULL != mod && NULL != mod->nm_register_func);
+  g_platformAddonRegistry.handleOldNapiModuleRegister(mod->nm_register_func);
+}
+} // extern "C"
+
 } // namespace callstack::nodeapihost

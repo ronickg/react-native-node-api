@@ -76,18 +76,31 @@ AddonRegistry::NodeAddon& AddonRegistry::loadAddon(std::string packageName,
 }
 
 bool AddonRegistry::tryLoadAddonAsDynamicLib(NodeAddon &addon, const std::string &path) {
+  {
+    // There can be only a SINGLE pending module (the same limitation
+    // has Node.js since Jan 28, 2014 commit 76b9846, see link below).
+    // We MUST clear it before attempting to load next addon.
+    // https://github.com/nodejs/node/blob/76b98462e589a69d9fd48ccb9fb5f6e96b539715/src/node.cc#L1949)
+    assert(nullptr == pendingRegistration_);
+  }
+
   // Load addon as dynamic library
   typename LoaderPolicy::Module library = LoaderPolicy::loadLibrary(path.c_str());
   if (nullptr != library) {
-    // pending addon remains empty, we should look for the symbols...
-    typename LoaderPolicy::Symbol initFn = LoaderPolicy::getSymbol(library, "napi_register_module_v1");
-    if (nullptr != initFn) {
-      addon.initFun_ = (napi_addon_register_func)initFn;
-      addon.moduleApiVersion_ = NODE_API_DEFAULT_MODULE_API_VERSION;
-      // This solves https://github.com/callstackincubator/react-native-node-api-modules/issues/4
-      typename LoaderPolicy::Symbol getVersionFn = LoaderPolicy::getSymbol(library, "node_api_module_get_api_version_v1");
-      if (nullptr != getVersionFn) {
-        addon.moduleApiVersion_ = ((node_api_addon_get_api_version_func)getVersionFn)();
+    if (nullptr != pendingRegistration_) {
+      // there is a pending addon that used the deprecated `napi_register_module()`
+      addon.initFun_ = pendingRegistration_;
+    } else {
+      // pending addon remains empty, we should look for the symbols...
+      typename LoaderPolicy::Symbol initFn = LoaderPolicy::getSymbol(library, "napi_register_module_v1");
+      if (nullptr != initFn) {
+        addon.initFun_ = (napi_addon_register_func)initFn;
+        addon.moduleApiVersion_ = NODE_API_DEFAULT_MODULE_API_VERSION;
+        // This solves https://github.com/callstackincubator/react-native-node-api-modules/issues/4
+        typename LoaderPolicy::Symbol getVersionFn = LoaderPolicy::getSymbol(library, "node_api_module_get_api_version_v1");
+        if (nullptr != getVersionFn) {
+          addon.moduleApiVersion_ = ((node_api_addon_get_api_version_func)getVersionFn)();
+        }
       }
     }
 
@@ -96,6 +109,11 @@ bool AddonRegistry::tryLoadAddonAsDynamicLib(NodeAddon &addon, const std::string
       addon.loadedFilePath_ = path;
     }
   }
+
+  // We MUST clear the `pendingAddon_`, even when the module failed to load!
+  // See: https://github.com/nodejs/node/commit/a60056df3cad2867d337fc1d7adeebe66f89031a
+  pendingRegistration_ = nullptr;
+  return addon.isLoaded();
 }
 
 jsi::Value AddonRegistry::instantiateAddonInRuntime(jsi::Runtime &rt, NodeAddon &addon) {
@@ -133,6 +151,12 @@ jsi::Value AddonRegistry::instantiateAddonInRuntime(jsi::Runtime &rt, NodeAddon 
   }
 
   return lookupAddonByFullPath(rt, fqap);
+}
+
+bool AddonRegistry::handleOldNapiModuleRegister(napi_addon_register_func addonInitFunc) {
+  assert(nullptr == pendingRegistration_);
+  pendingRegistration_ = addonInitFunc;
+  return true;
 }
 
 napi_status AddonRegistry::createAddonDescriptor(napi_env env, napi_value exports, napi_value *outDescriptor) {
