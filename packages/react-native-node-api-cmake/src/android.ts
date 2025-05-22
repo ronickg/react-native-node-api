@@ -4,6 +4,16 @@ import path from "node:path";
 
 import { AndroidTriplet } from "react-native-node-api-modules";
 
+import { isNinjaAvailable } from "./ninja.js";
+
+function getCmakeGenerator() {
+  if (isNinjaAvailable()) {
+    return "Ninja";
+  } else {
+    return "Unix Makefiles";
+  }
+}
+
 export const DEFAULT_ANDROID_TRIPLETS = [
   "aarch64-linux-android",
   "armv7a-linux-androideabi",
@@ -49,9 +59,8 @@ export function getAndroidConfigureCmakeArgs({
   const architecture = ANDROID_ARCHITECTURES[triplet];
 
   return [
-    // Use the XCode as generator for Apple platforms
     "-G",
-    "Ninja",
+    getCmakeGenerator(),
     "--toolchain",
     toolchainPath,
     "-D",
