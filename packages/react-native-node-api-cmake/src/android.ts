@@ -48,12 +48,6 @@ export function getAndroidConfigureCmakeArgs({
   );
   const architecture = ANDROID_ARCHITECTURES[triplet];
 
-  const linkerFlags: string[] = [
-    // `--no-version-undefined`,
-    // `--whole-archive`,
-    // `--no-whole-archive`,
-  ];
-
   return [
     // Use the XCode as generator for Apple platforms
     "-G",
@@ -68,8 +62,6 @@ export function getAndroidConfigureCmakeArgs({
     // `CMAKE_INSTALL_PREFIX=${installPath}`,
     // "-D",
     // `CMAKE_BUILD_TYPE=${configuration}`,
-    "-D",
-    "CMAKE_MAKE_PROGRAM=ninja",
     // "-D",
     // "CMAKE_C_COMPILER_LAUNCHER=ccache",
     // "-D",
@@ -84,13 +76,5 @@ export function getAndroidConfigureCmakeArgs({
     // `ANDROID_NATIVE_API_LEVEL=${ANDROID_API_LEVEL}`,
     "-D",
     "ANDROID_STL=c++_shared",
-    // Pass linker flags to avoid errors from undefined symbols
-    // TODO: Link against a weak-node-api to avoid this (or whatever other lib which will be providing the symbols)
-    // "-D",
-    // `CMAKE_SHARED_LINKER_FLAGS="-Wl,--allow-shlib-undefined"`,
-    "-D",
-    `CMAKE_SHARED_LINKER_FLAGS=${linkerFlags
-      .map((flag) => `-Wl,${flag}`)
-      .join(" ")}`,
   ];
 }
