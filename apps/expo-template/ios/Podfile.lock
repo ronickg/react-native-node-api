@@ -1394,6 +1394,30 @@ PODS:
     - React-jsiexecutor
     - React-RCTFBReactNativeSpec
     - ReactCommon/turbomodule/core
+  - react-native-node-api-modules (0.1.0):
+    - DoubleConversion
+    - glog
+    - hermes-engine
+    - RCT-Folly (= 2024.11.18.00)
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-hermes
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - Yoga
   - React-NativeModulesApple (0.79.0-rc.4):
     - glog
     - hermes-engine
@@ -1767,6 +1791,7 @@ DEPENDENCIES:
   - React-logger (from `../node_modules/react-native/ReactCommon/logger`)
   - React-Mapbuffer (from `../node_modules/react-native/ReactCommon`)
   - React-microtasksnativemodule (from `../node_modules/react-native/ReactCommon/react/nativemodule/microtasks`)
+  - react-native-node-api-modules (from `../../../node_modules/react-native-node-api-modules`)
   - React-NativeModulesApple (from `../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios`)
   - React-oscompat (from `../node_modules/react-native/ReactCommon/oscompat`)
   - React-perflogger (from `../node_modules/react-native/ReactCommon/reactperflogger`)
@@ -1896,6 +1921,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon"
   React-microtasksnativemodule:
     :path: "../node_modules/react-native/ReactCommon/react/nativemodule/microtasks"
+  react-native-node-api-modules:
+    :path: "../../../node_modules/react-native-node-api-modules"
   React-NativeModulesApple:
     :path: "../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios"
   React-oscompat:
@@ -2007,6 +2034,7 @@ SPEC CHECKSUMS:
   React-logger: e7831c47425bf6a3e4c36022bf2636a8d5f112ee
   React-Mapbuffer: aee77f26ccc8ae3846ddede7ed8350680a69b8df
   React-microtasksnativemodule: 84520f194edb907b394e0b65b590404e67cb205c
+  react-native-node-api-modules: d9f1094df92f2c610f2532ef73b3f0a6f0c7c9d1
   React-NativeModulesApple: 0b5a823c372c93399cb76c8d183e7a2b7491e5dd
   React-oscompat: c6082f356b7a89f29d011e36aaac7101a0a5c032
   React-perflogger: 0329795ce055af2c8b109a915ecb922597cf2026
