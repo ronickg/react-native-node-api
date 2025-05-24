@@ -1,0 +1,9 @@
+{
+  "extends": "@tsconfig/node22/tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "checkJs": true,
+    "allowJs": true
+  },
+  "files": ["index.js", "app.plugin.js"]
+}

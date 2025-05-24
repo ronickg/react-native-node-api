@@ -15,6 +15,7 @@ export default tseslint.config(
   {
     files: [
       "apps/test-app/*.js",
+      "packages/expo-config-plugin/*.js",
       "packages/node-addon-examples/*.js",
       "packages/react-native-node-api-modules/babel-plugin.js",
       "packages/react-native-node-api-modules/react-native.config.js"
@@ -34,6 +35,7 @@ export default tseslint.config(
   },
   {
     files: [
+      "packages/expo-config-plugin/*.js",
       "packages/gyp-to-cmake/bin/*.js",
       "packages/react-native-node-api-modules/bin/*.mjs",
       "packages/react-native-node-api-modules/scripts/*.mjs"
