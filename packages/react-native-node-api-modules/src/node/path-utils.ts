@@ -45,13 +45,41 @@ export function isNodeApiModule(modulePath: string): boolean {
     if (!entries.includes(fileName)) {
       return false;
     }
+    
+    const filePath = path.join(dir, fileName);
+    
     try {
-      fs.accessSync(path.join(dir, fileName), fs.constants.R_OK);
-      return true;
-    } catch (cause) {
-      throw new Error(`Found an unreadable module ${fileName}: ${cause}`);
+      // First, check if file exists (works the same on all platforms)
+      fs.accessSync(filePath, fs.constants.F_OK);
+      
+      // Then check if it's readable (behavior differs by platform)
+      if (!isReadableSync(filePath)) {
+        throw new Error(`Found an unreadable module ${fileName}`);
+      }
+    } catch (err) {
+      throw new Error(`Found an unreadable module ${fileName}`, { cause: err });
     }
+    return true;
   });
+}
+
+/**
+ * Check if a path is readable according to permission bits.
+ * On Windows, tests store POSIX S_IWUSR bit in stats.mode.
+ * On Unix-like, uses fs.accessSync for R_OK.
+ */
+function isReadableSync(p: string): boolean {
+  try {
+    if (process.platform === "win32") {
+      const stats = fs.statSync(p);
+      return !!(stats.mode & fs.constants.S_IWUSR);
+    } else {
+      fs.accessSync(p, fs.constants.R_OK);
+      return true;
+    }
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -107,7 +135,8 @@ export function normalizeModulePath(modulePath: string) {
   const dirname = path.normalize(path.dirname(modulePath));
   const basename = path.basename(modulePath);
   const strippedBasename = stripExtension(basename).replace(/^lib/, "");
-  return path.join(dirname, strippedBasename);
+  // Replace backslashes with forward slashes for cross-platform compatibility
+  return path.join(dirname, strippedBasename).replaceAll("\\", "/");
 }
 
 export function escapePath(modulePath: string) {
@@ -247,6 +276,13 @@ export function findNodeApiModulePaths(
     return [];
   }
   const candidatePath = path.join(fromPath, suffix);
+  // Normalize path separators for consistent pattern matching on all platforms
+  const normalizedSuffix = suffix.split(path.sep).join('/');
+  
+  if (excludePatterns.some((pattern) => pattern.test(normalizedSuffix))) {
+    return [];
+  }
+  
   return fs
     .readdirSync(candidatePath, { withFileTypes: true })
     .flatMap((file) => {
