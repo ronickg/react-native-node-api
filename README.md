@@ -24,7 +24,7 @@
 > Once the [PR adding Node-API support to Hermes](https://github.com/facebook/hermes/pull/1377) merges, we expect this restriction to be lifted.
 
 > [!NOTE]
-> This library is currently only implemented for iOS, we want to add support for Android next and eventually React Native for Windows and macOS too.
+> This library is currently only implemented for iOS and Android, we want to eventually support React Native for Windows, macOS, visionOS and other out-of-tree platforms too.
 
 See the document on ["how it works"](./docs/HOW_IT_WORKS.md) for a detailed description of what it's like to write native modules using this package.
 
