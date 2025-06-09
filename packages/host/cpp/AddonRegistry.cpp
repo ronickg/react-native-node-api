@@ -30,13 +30,28 @@ napi_status napi_emplace_named_property_object(napi_env env,
   return status;
 }
 
+bool endsWith(const std::string &str, const std::string &suffix) {
+#if __cplusplus >= 202002L // __cpp_lib_starts_ends_with
+  return str.ends_with(suffix);
+#else
+  return str.size() >= suffix.size()
+    && std::equal(suffix.rbegin(), suffix.rend(), str.rbegin());
+#endif
+}
+
+std::string_view stripSuffix(const std::string_view &str, const std::string_view &suffix) {
+  if (endsWith(str, suffix)) {
+    return str.substr(0, str.size() - suffix.size());
+  } else {
+    return str;
+  }
+}
+
 void sanitizeLibraryNameInplace(std::string &name) {
 #if USING_PATCHED_BABEL_PLUGIN
   // Strip the extension (if present)
   // NOTE: This is needed when working with updated Babel plugin
-  if (auto pos = name.find(".node"); std::string::npos != pos) {
-    name = name.substr(0, pos);
-  }
+  name = stripSuffix(name, ".node");
 #endif
 
   for (char &c : name) {
