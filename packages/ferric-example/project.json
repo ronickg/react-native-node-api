@@ -2,6 +2,7 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "targets": {
     "build": {
+      "dependsOn": ["ferric-cli:build"],
       "inputs": [
         "{projectRoot}/build.rs",
         "{projectRoot}/Cargo.toml",
