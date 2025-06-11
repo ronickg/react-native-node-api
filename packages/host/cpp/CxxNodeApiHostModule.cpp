@@ -140,7 +140,7 @@ CxxNodeApiHostModule::requireNodeAddon(jsi::Runtime &rt,
                                        const jsi::Value args[], size_t count) {
   auto &thisModule = static_cast<CxxNodeApiHostModule &>(turboModule);
   if (3 == count) {
-    // Must be `requireNodeAddon(requiredPath: string, requiredPackageName: string, requiredFrom: string)`
+    // Must be `requireNodeAddon(requiredPath: string, requiredPackageName: string, originalId: string)`
     return thisModule.requireNodeAddon(rt,
         args[0].asString(rt),
         args[1].asString(rt),
@@ -153,24 +153,21 @@ jsi::Value
 CxxNodeApiHostModule::requireNodeAddon(jsi::Runtime &rt,
                                        const jsi::String &requiredPath,
                                        const jsi::String &requiredPackageName,
-                                       const jsi::String &requiredFrom) {
+                                       const jsi::String &originalId) {
   return requireNodeAddon(rt,
       requiredPath.utf8(rt),
       requiredPackageName.utf8(rt),
-      requiredFrom.utf8(rt));
+      originalId.utf8(rt));
 }
 
 jsi::Value
 CxxNodeApiHostModule::requireNodeAddon(jsi::Runtime &rt,
                                        const std::string &requiredPath,
                                        const std::string &requiredPackageName,
-                                       const std::string &requiredFrom) {
+                                       const std::string &originalId) {
   // Ensure that user-supplied inputs contain only allowed characters
   if (!isModulePathLike(requiredPath)) {
     throw jsi::JSError(rt, "Invalid characters in `requiredPath`. Only ASCII alphanumerics are allowed.");
-  }
-  if (!isModulePathLike(requiredFrom)) {
-    throw jsi::JSError(rt, "Invalid characters in `requiredFrom`. Only ASCII alphanumerics are allowed.");
   }
 
   // Check if this is a prefixed import (e.g. `node:fs/promises`)
@@ -180,7 +177,7 @@ CxxNodeApiHostModule::requireNodeAddon(jsi::Runtime &rt,
     std::string pathPrefixCopy(pathPrefix); // HACK: Need explicit cast to `std::string`
     if (auto handler = prefixResolvers_.find(pathPrefixCopy); prefixResolvers_.end() != handler) {
       // HACK: Smuggle the `pathPrefix` as new `requiredPackageName`
-      return (handler->second)(rt, strippedPath, pathPrefix, requiredFrom);
+      return (handler->second)(rt, strippedPath, pathPrefix, originalId);
     } else {
       throw jsi::JSError(rt, "Unsupported protocol or prefix \"" + pathPrefixCopy + "\". Have you registered it?");
     }
@@ -189,45 +186,39 @@ CxxNodeApiHostModule::requireNodeAddon(jsi::Runtime &rt,
   // Check, if this package has been overridden
   if (auto handler = packageOverrides_.find(requiredPackageName); packageOverrides_.end() != handler) {
     // This package has a custom resolver, invoke it
-    return (handler->second)(rt, strippedPath, requiredPackageName, requiredFrom);
+    return (handler->second)(rt, strippedPath, requiredPackageName, originalId);
   }
 
-  // Otherwise, "requiredPath" must be a "relative specifier" or a "bare specifier"
-  return resolveRelativePath(rt, strippedPath, requiredPackageName, requiredFrom);
+  // Otherwise, "requiredPath" must be a package-relative specifier
+  return resolveRelativePath(rt, strippedPath, requiredPackageName, originalId);
 }
 
 jsi::Value
 CxxNodeApiHostModule::resolveRelativePath(facebook::jsi::Runtime &rt,
                                           const std::string_view &requiredPath,
                                           const std::string_view &requiredPackageName,
-                                          const std::string_view &requiredFrom) {
-  // "Rebase" the relative path to get a proper package-relative path
-  const auto requiredFromDirParts = makeParentPath(requiredFrom);
-  const auto requiredPathParts = explodePath(requiredPath);
-  const std::string mergedSubpath = implodePath(joinPath(requiredFromDirParts, requiredPathParts));
-  if (!isModulePathLike(mergedSubpath)) {
-    throw jsi::JSError(rt, "Computed subpath is invalid. Check `requiredPath` and `requiredFrom`.");
-  }
-  if (!startsWith(mergedSubpath, "./")) {
-    throw jsi::JSError(rt, "Subpath must be relative and cannot leave its package root.");
+                                          const std::string_view &originalId) {
+  if (!startsWith(requiredPath, "./")) {
+    throw jsi::JSError(rt, "requiredPath must be relative and cannot leave its package root.");
   }
 
-  // Check whether (`requiredPackageName`, `mergedSubpath`) is already cached
+  // Check whether (`requiredPackageName`, `requiredPath`) is already cached
   // NOTE: Cache must to be `jsi::Runtime`-local
   auto [exports, isCached] = lookupRequireCache(rt,
                                                 requiredPackageName,
-                                                mergedSubpath);
+                                                requiredPath);
 
   if (!isCached) {
     // Ask the global addon registry to load given Node-API addon.
     // If other runtime loaded it already, the OS will return the same pointer.
     // NOTE: This method might try multiple platform-specific paths.
     const std::string packageNameCopy(requiredPackageName);
-    auto &addon = g_platformAddonRegistry.loadAddon(packageNameCopy, mergedSubpath);
+    const std::string requiredPathCopy(requiredPath);
+    auto &addon = g_platformAddonRegistry.loadAddon(packageNameCopy, requiredPathCopy);
 
     // Create a `napi_env` and initialize the addon
     exports = g_platformAddonRegistry.instantiateAddonInRuntime(rt, addon);
-    updateRequireCache(rt, requiredPackageName, mergedSubpath, exports);
+    updateRequireCache(rt, requiredPackageName, requiredPath, exports);
   }
 
   return std::move(exports);

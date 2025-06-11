@@ -29,16 +29,16 @@ public:
   facebook::jsi::Value requireNodeAddon(facebook::jsi::Runtime &rt,
                                         const facebook::jsi::String &requiredPath,
                                         const facebook::jsi::String &requiredPackageName,
-                                        const facebook::jsi::String &requiredFrom);
+                                        const facebook::jsi::String &originalId);
   facebook::jsi::Value requireNodeAddon(facebook::jsi::Runtime &rt,
                                         const std::string &requiredPath,
                                         const std::string &requiredPackageName,
-                                        const std::string &requiredFrom);
+                                        const std::string &originalId);
 
   facebook::jsi::Value resolveRelativePath(facebook::jsi::Runtime &rt,
                                            const std::string_view &requiredPath,
                                            const std::string_view &requiredPackageName,
-                                           const std::string_view &requiredFrom);
+                                           const std::string_view &originalId);
 
   std::pair<facebook::jsi::Value, bool>
   lookupRequireCache(facebook::jsi::Runtime &rt,
