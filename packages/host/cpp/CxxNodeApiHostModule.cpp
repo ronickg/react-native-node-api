@@ -11,7 +11,7 @@ using namespace facebook;
 
 namespace {
 
-bool startsWith(const std::string &str, const std::string &prefix) {
+bool startsWith(const std::string_view &str, const std::string_view &prefix) {
 #if __cplusplus >= 202002L // __cpp_lib_starts_ends_with
   return str.starts_with(prefix);
 #else
