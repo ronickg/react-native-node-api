@@ -1,0 +1,48 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "targets": {
+    "build": {
+      "inputs": ["{projectRoot}/src/**"],
+      "outputs": ["{projectRoot}/dist", "{projectRoot}/*.tsbuildinfo"],
+      "cache": true
+    },
+    "copy-node-api-headers": {
+      "inputs": ["{projectRoot}/scripts/copy-node-api-headers.ts"],
+      "outputs": ["{projectRoot}/weak-node-api/include"],
+      "cache": true
+    },
+    "generate-weak-node-api": {
+      "inputs": ["{projectRoot}/scripts/generate-weak-node-api.ts"],
+      "outputs": [
+        "{projectRoot}/weak-node-api/weak_node_api.cpp",
+        "{projectRoot}/weak-node-api/weak_node_api.hpp"
+      ],
+      "cache": true
+    },
+    "generate-weak-node-api-injector": {
+      "inputs": ["{projectRoot}/scripts/generate-weak-node-api-injector.ts"],
+      "outputs": ["{projectRoot}/cpp/WeakNodeApiInjector.cpp"],
+      "cache": true
+    },
+    "build-weak-node-api": {
+      "dependsOn": [
+        "cmake-rn:build",
+        "copy-node-api-headers",
+        "generate-weak-node-api",
+        "generate-weak-node-api-injector"
+      ],
+      "inputs": [
+        "{projectRoot}/weak-node-api/CMakeLists.txt",
+        "{projectRoot}/weak-node-api/include/**",
+        "{projectRoot}/weak-node-api/*.cpp",
+        "{projectRoot}/weak-node-api/*.hpp"
+      ],
+      "outputs": [
+        "{projectRoot}/weak-node-api/build",
+        "{projectRoot}/weak-node-api/weak-node-api.android.node",
+        "{projectRoot}/weak-node-api/weak-node-api.xcframework"
+      ],
+      "cache": true
+    }
+  }
+}

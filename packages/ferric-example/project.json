@@ -1,0 +1,14 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "targets": {
+    "build": {
+      "inputs": [
+        "{projectRoot}/build.rs",
+        "{projectRoot}/Cargo.toml",
+        "{projectRoot}/src/**"
+      ],
+      "outputs": ["{projectRoot}/target", "{projectRoot}/*.node"],
+      "cache": true
+    }
+  }
+}

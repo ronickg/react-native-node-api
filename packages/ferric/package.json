@@ -13,10 +13,11 @@
     "ferric": "./bin/ferric.js"
   },
   "scripts": {
+    "build": "tsc",
     "start": "tsx src/run.ts"
   },
   "dependencies": {
-    "@napi-rs/cli": "3.0.0-alpha.80",
+    "@napi-rs/cli": "3.0.0-alpha.88",
     "@commander-js/extra-typings": "^13.1.0",
     "bufout": "^0.3.1",
     "chalk": "^5.4.1",

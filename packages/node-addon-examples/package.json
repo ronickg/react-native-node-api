@@ -11,9 +11,7 @@
     "copy-examples": "tsx scripts/copy-examples.mts",
     "gyp-to-cmake": "gyp-to-cmake ./examples",
     "build": "tsx scripts/build-examples.mts",
-    "copy-and-build": "npm run copy-examples && npm run gyp-to-cmake && npm run build",
-    "verify": "tsx scripts/verify-prebuilds.mts",
-    "test": "npm run copy-and-build && npm run verify"
+    "test": "tsx scripts/verify-prebuilds.mts"
   },
   "devDependencies": {
     "cmake-rn": "*",

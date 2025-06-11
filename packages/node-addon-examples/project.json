@@ -1,0 +1,31 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "targets": {
+    "copy-examples": {
+      "outputs": [
+        "{projectRoot}/examples/**",
+        "!{projectRoot}/examples/**/CMakeLists.txt",
+        "!{projectRoot}/examples/**/*.node"
+      ],
+      "cache": true
+    },
+    "gyp-to-cmake": {
+      "dependsOn": ["copy-examples"],
+      "inputs": ["{projectRoot}/examples/**/binding.gyp"],
+      "outputs": ["{projectRoot}/examples/**/CMakeLists.txt"],
+      "cache": true
+    },
+    "build": {
+      "dependsOn": ["copy-examples", "gyp-to-cmake"],
+      "inputs": [
+        "{projectRoot}/examples/**",
+        "!{projectRoot}/examples/**/*.node"
+      ],
+      "outputs": ["{projectRoot}/examples/**/*.node"],
+      "cache": true
+    },
+    "test": {
+      "dependsOn": ["build"]
+    }
+  }
+}
