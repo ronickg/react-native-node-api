@@ -18,20 +18,12 @@ jobs:
           node-version: lts/jod
       - run: npm ci
       - run: npm run lint
-  test-simple:
-    name: Run tests which doesn't require MacOS
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: lts/jod
-      - run: npm ci
-      - run: npm run build
-      - run: npm test --workspace gyp-to-cmake --workspace cmake-rn --workspace react-native-node-api
-  test-windows:
-    name: Run tests on Windows
-    runs-on: windows-latest
+  simple-tests:
+    strategy:
+      matrix:
+        runner: [ubuntu-latest, windows-latest, macos-latest]
+    name: Run simple tests (${{ matrix.runner }})
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -39,8 +31,7 @@ jobs:
           node-version: lts/jod
       - run: npm ci
       - run: npm test -- --exclude @react-native-node-api/node-addon-examples
-
-  test-macos:
+  macos-tests:
     name: Run tests which requires MacOS
     runs-on: macos-latest
     steps:
@@ -58,4 +49,4 @@ jobs:
         # Version here should match the one in React Native template and packages/cmake-rn/src/cli.ts
       - run: sdkmanager --install "ndk;27.1.12297006"
       - run: npm ci
-      - run: npm test
+      - run: npm test -- -p @react-native-node-api/node-addon-examples
