@@ -18,22 +18,12 @@ jobs:
           node-version: lts/jod
       - run: npm ci
       - run: npm run lint
-  simple-tests:
+  test:
     strategy:
       matrix:
-        runner: [ubuntu-latest, windows-latest]
-    name: Run simple tests (${{ matrix.runner }})
+        runner: [ubuntu-latest, windows-latest, macos-latest]
+    name: Test (${{ matrix.runner }})
     runs-on: ${{ matrix.runner }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: lts/jod
-      - run: npm ci
-      - run: npx nx run-many -t test --exclude @react-native-node-api/node-addon-examples
-  macos-tests:
-    name: Run tests which requires MacOS
-    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
