@@ -21,7 +21,7 @@ jobs:
   simple-tests:
     strategy:
       matrix:
-        runner: [ubuntu-latest, windows-latest, macos-latest]
+        runner: [ubuntu-latest, windows-latest]
     name: Run simple tests (${{ matrix.runner }})
     runs-on: ${{ matrix.runner }}
     steps:
@@ -30,7 +30,7 @@ jobs:
         with:
           node-version: lts/jod
       - run: npm ci
-      - run: npm test -- --exclude @react-native-node-api/node-addon-examples
+      - run: npx nx run-many -t test --exclude @react-native-node-api/node-addon-examples
   macos-tests:
     name: Run tests which requires MacOS
     runs-on: macos-latest
@@ -49,4 +49,4 @@ jobs:
         # Version here should match the one in React Native template and packages/cmake-rn/src/cli.ts
       - run: sdkmanager --install "ndk;27.1.12297006"
       - run: npm ci
-      - run: npm test -- -p @react-native-node-api/node-addon-examples
+      - run: npx nx run-many -t test
