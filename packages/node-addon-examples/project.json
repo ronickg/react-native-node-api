@@ -10,13 +10,18 @@
       "cache": true
     },
     "gyp-to-cmake": {
-      "dependsOn": ["copy-examples"],
+      "dependsOn": ["gyp-to-cmake:build", "copy-examples"],
       "inputs": ["{projectRoot}/examples/**/binding.gyp"],
       "outputs": ["{projectRoot}/examples/**/CMakeLists.txt"],
       "cache": true
     },
     "build": {
-      "dependsOn": ["copy-examples", "gyp-to-cmake"],
+      "dependsOn": [
+        "react-native-node-api:build-weak-node-api",
+        "cmake-rn:build",
+        "copy-examples",
+        "gyp-to-cmake"
+      ],
       "inputs": [
         "{projectRoot}/examples/**",
         "!{projectRoot}/examples/**/*.node"
