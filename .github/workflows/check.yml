@@ -18,32 +18,12 @@ jobs:
           node-version: lts/jod
       - run: npm ci
       - run: npm run lint
-  test-simple:
-    name: Run tests which doesn't require MacOS
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: lts/jod
-      - run: npm ci
-      - run: npm run build
-      - run: npm test --workspace gyp-to-cmake --workspace cmake-rn --workspace react-native-node-api
-  test-windows:
-    name: Run tests on Windows
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: lts/jod
-      - run: npm ci
-      - run: npm run build
-      - run: npm test --workspace gyp-to-cmake --workspace cmake-rn --workspace react-native-node-api
-
-  test-macos:
-    name: Run tests which requires MacOS
-    runs-on: macos-latest
+  test:
+    strategy:
+      matrix:
+        runner: [ubuntu-latest, windows-latest, macos-latest]
+    name: Test (${{ matrix.runner }})
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -59,8 +39,5 @@ jobs:
         # Version here should match the one in React Native template and packages/cmake-rn/src/cli.ts
       - run: sdkmanager --install "ndk;27.1.12297006"
       - run: npm ci
-      - run: npm run build
-      - run: npm run copy-node-api-headers --workspace react-native-node-api
-      - run: npm run build-weak-node-api --workspace react-native-node-api
-      - run: npm run generate-weak-node-api-injector --workspace react-native-node-api
-      - run: npm test --workspace @react-native-node-api/node-addon-examples
+      - run: npm run bootstrap
+      - run: npm test
