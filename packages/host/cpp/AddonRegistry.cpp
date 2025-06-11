@@ -30,7 +30,7 @@ napi_status napi_emplace_named_property_object(napi_env env,
   return status;
 }
 
-bool endsWith(const std::string &str, const std::string &suffix) {
+bool endsWith(const std::string_view &str, const std::string_view &suffix) {
 #if __cplusplus >= 202002L // __cpp_lib_starts_ends_with
   return str.ends_with(suffix);
 #else
