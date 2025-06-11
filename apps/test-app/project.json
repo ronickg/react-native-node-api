@@ -1,0 +1,12 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "targets": {
+    "test:ios": {
+      "dependsOn": [
+        "react-native-node-api:build",
+        "@react-native-node-api/node-addon-examples:build",
+        "ferric-example:build"
+      ]
+    }
+  }
+}
