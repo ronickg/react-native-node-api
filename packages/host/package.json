@@ -1,17 +1,17 @@
 {
-  "name": "react-native-node-api-modules",
+  "name": "react-native-node-api",
   "version": "0.1.0",
-  "description": "Node-API Modules for React Native",
-  "homepage": "https://github.com/callstackincubator/react-native-node-api-modules",
+  "description": "Node-API for React Native",
+  "homepage": "https://github.com/callstackincubator/react-native-node-api",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/callstackincubator/react-native-node-api-modules.git",
-    "directory": "packages/react-native-node-api-cmake"
+    "url": "git+https://github.com/callstackincubator/react-native-node-api.git",
+    "directory": "packages/react-native-node-api"
   },
   "main": "dist/react-native/index.js",
   "type": "commonjs",
   "bin": {
-    "react-native-node-api-modules": "./bin/react-native-node-api-modules.mjs"
+    "react-native-node-api": "./bin/react-native-node-api.mjs"
   },
   "exports": {
     ".": {
@@ -43,7 +43,7 @@
     "copy-node-api-headers": "tsx scripts/copy-node-api-headers.ts",
     "generate-weak-node-api": "tsx scripts/generate-weak-node-api.ts",
     "generate-weak-node-api-injector": "tsx scripts/generate-weak-node-api-injector.ts",
-    "build-weak-node-api": "npm run generate-weak-node-api && react-native-node-api-cmake --android --apple --no-auto-link --no-weak-node-api-linkage --xcframework-extension --source ./weak-node-api",
+    "build-weak-node-api": "npm run generate-weak-node-api && cmake-rn --android --apple --no-auto-link --no-weak-node-api-linkage --xcframework-extension --source ./weak-node-api",
     "test": "tsx --test src/node/**/*.test.ts src/node/*.test.ts"
   },
   "keywords": [
