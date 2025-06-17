@@ -11,7 +11,7 @@
   "main": "ferric_example.js",
   "types": "ferric_example.d.ts",
   "scripts": {
-    "build": "ferric build --android --apple"
+    "build": "ferric build"
   },
   "devDependencies": {
     "ferric-cli": "^0.1.0"
