@@ -23,6 +23,7 @@ jobs:
       - run: npm run lint
   test:
     strategy:
+      fail-fast: false
       matrix:
         runner: [ubuntu-latest, windows-latest, macos-latest]
     name: Test (${{ matrix.runner }})
