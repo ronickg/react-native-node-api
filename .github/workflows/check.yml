@@ -41,6 +41,7 @@ jobs:
         uses: android-actions/setup-android@v3
         # Version here should match the one in React Native template and packages/cmake-rn/src/cli.ts
       - run: sdkmanager --install "ndk;27.1.12297006"
+      - run: rustup target add x86_64-linux-android aarch64-linux-android aarch64-apple-ios-sim
       - run: npm ci
       - run: npm run bootstrap
       - run: npm test
