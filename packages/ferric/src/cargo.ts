@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import cp from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { spawn } from "bufout";
 import chalk from "chalk";
@@ -14,9 +15,9 @@ import {
   isAppleTarget,
 } from "./targets.js";
 
-const WEAK_NODE_API_PATH = new URL(
+const WEAK_NODE_API_PATH = fileURLToPath(
   import.meta.resolve("react-native-node-api/weak-node-api")
-).pathname;
+);
 
 const APPLE_XCFRAMEWORK_CHILDS_PER_TARGET: Record<AppleTargetName, string> = {
   "aarch64-apple-darwin": "macos-arm64_x86_64", // Universal
