@@ -48,11 +48,9 @@ std::string_view stripSuffix(const std::string_view &str, const std::string_view
 }
 
 void sanitizeLibraryNameInplace(std::string &name) {
-#if USING_PATCHED_BABEL_PLUGIN
   // Strip the extension (if present)
   // NOTE: This is needed when working with updated Babel plugin
   name = stripSuffix(name, ".node");
-#endif
 
   for (char &c : name) {
     if (!std::isalnum(c)) {

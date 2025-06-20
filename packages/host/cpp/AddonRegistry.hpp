@@ -5,9 +5,6 @@
 #include <node_api.h>
 #include "AddonLoaders.hpp"
 
-// HACK: Feature flag that enables backwards-compatible code until PR is finished
-#define USING_PATCHED_BABEL_PLUGIN  1
-
 namespace callstack::nodeapihost {
 
 class AddonRegistry {
