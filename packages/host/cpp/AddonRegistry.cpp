@@ -102,6 +102,7 @@ bool AddonRegistry::tryLoadAddonAsDynamicLib(NodeAddon &addon, const std::string
   // Load addon as dynamic library
   typename LoaderPolicy::Module library = LoaderPolicy::loadLibrary(path.c_str());
   if (nullptr != library) {
+    addon.moduleApiVersion_ = NODE_API_DEFAULT_MODULE_API_VERSION;
     if (nullptr != pendingRegistration_) {
       // there is a pending addon that used the deprecated `napi_register_module()`
       addon.initFun_ = pendingRegistration_;
@@ -110,7 +111,6 @@ bool AddonRegistry::tryLoadAddonAsDynamicLib(NodeAddon &addon, const std::string
       typename LoaderPolicy::Symbol initFn = LoaderPolicy::getSymbol(library, "napi_register_module_v1");
       if (nullptr != initFn) {
         addon.initFun_ = (napi_addon_register_func)initFn;
-        addon.moduleApiVersion_ = NODE_API_DEFAULT_MODULE_API_VERSION;
         // This solves https://github.com/callstackincubator/react-native-node-api-modules/issues/4
         typename LoaderPolicy::Symbol getVersionFn = LoaderPolicy::getSymbol(library, "node_api_module_get_api_version_v1");
         if (nullptr != getVersionFn) {
