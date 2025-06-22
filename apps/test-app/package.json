@@ -24,7 +24,7 @@
     "@react-native/typescript-config": "0.79.0",
     "@rnx-kit/metro-config": "^2.0.1",
     "@types/react": "^19.0.0",
-    "bufout": "^0.3.2",
+    "bufout": "^0.3.4",
     "ferric-example": "^0.1.0",
     "mocha": "^11.6.0",
     "mocha-remote-cli": "^1.13.1",
