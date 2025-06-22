@@ -5,7 +5,7 @@
     "emitDeclarationOnly": true,
     "outDir": "dist",
     "rootDir": "scripts",
-    "types": ["node", "bufout"]
+    "types": ["node", "bufout", "mocha"]
   },
   "include": ["scripts/**/*.ts"],
   "exclude": []

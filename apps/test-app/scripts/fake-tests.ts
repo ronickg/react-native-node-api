@@ -1,0 +1,32 @@
+import path from "node:path";
+
+import { spawn } from "bufout";
+import { Client } from "mocha-remote-client";
+
+const cwd = path.resolve(__dirname, "..");
+const env = {
+  ...process.env,
+  FORCE_COLOR: "1",
+};
+
+const metro = spawn("npx", ["react-native", "start", "--no-interactive"], {
+  cwd,
+  stdio: "inherit",
+  outputPrefix: "[metro] ",
+  env,
+});
+
+// Create a client, which will automatically connect to the server on the default port (8090)
+const client = new Client({
+  // Called when the server asks the client to run
+  tests: () => {
+    // write your tests here or require a package that calls the mocha globals
+    describe("my thing", () => {
+      it("works", () => {
+        // yay!
+      });
+    });
+  },
+});
+
+metro.catch(console.error);

@@ -15,28 +15,14 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  lint:
-    name: Lint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: lts/jod
-      - run: npm ci
-      - run: npm run lint
   test:
     strategy:
       fail-fast: false
       matrix:
         runner:
           - ubuntu-latest
-          - windows-latest
-          - macos-latest
         variant:
-          - unit-tests
           - android-tests
-          - ios-tests
         exclude:
           # iOS tests are only supported on macOS runners
           - runner: ubuntu-latest

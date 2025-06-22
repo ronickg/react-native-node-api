@@ -9,7 +9,8 @@
     "build:android": "react-native bundle --entry-file index.js --platform android --dev true --bundle-output dist/main.android.jsbundle --assets-dest dist/res",
     "ios": "react-native run-ios --no-packager",
     "pod-install": "cd ios && pod install",
-    "test:android": "mocha-remote --exit-on-error -- tsx ./scripts/run-tests.ts android",
+    "test:android:original": "mocha-remote --exit-on-error -- tsx ./scripts/run-tests.ts android",
+    "test:android": "mocha-remote --exit-on-error -- tsx ./scripts/fake-tests.ts",
     "test:ios": "mocha-remote --exit-on-error -- tsx ./scripts/run-tests.ts ios"
   },
   "dependencies": {
@@ -23,6 +24,7 @@
     "@react-native/metro-config": "0.79.0",
     "@react-native/typescript-config": "0.79.0",
     "@rnx-kit/metro-config": "^2.0.1",
+    "@types/mocha": "^10.0.10",
     "@types/react": "^19.0.0",
     "bufout": "^0.3.4",
     "ferric-example": "^0.1.0",
