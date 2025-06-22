@@ -16,14 +16,20 @@ const metro = spawn("npx", ["react-native", "start", "--no-interactive"], {
   env,
 });
 
+process.once("SIGTERM", () => {
+  console.log("Received SIGTERM, shutting down metro server...");
+  metro.kill();
+});
+
 // Create a client, which will automatically connect to the server on the default port (8090)
 const client = new Client({
   // Called when the server asks the client to run
   tests: () => {
     // write your tests here or require a package that calls the mocha globals
     describe("my thing", () => {
-      it("works", () => {
+      it("works", async () => {
         // yay!
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       });
     });
   },
