@@ -134,5 +134,3 @@ jobs:
             adb uninstall com.microsoft.reacttestapp || true
             # Build, install and run the app
             npm run test:android
-            # Wait a bit for the sub-process to terminate, before terminating the emulator
-            sleep 5
