@@ -1,6 +1,6 @@
 import path from "node:path";
 
-import { spawn } from "bufout";
+import { spawn, SpawnFailure } from "bufout";
 import { Client } from "mocha-remote-client";
 
 const cwd = path.resolve(__dirname, "..");
@@ -9,7 +9,7 @@ const env = {
   FORCE_COLOR: "1",
 };
 
-const metro = spawn("npx", ["react-native", "start", "--no-interactive"], {
+const metro = spawn("react-native", ["start", "--no-interactive"], {
   cwd,
   stdio: "inherit",
   outputPrefix: "[metro] ",
@@ -35,4 +35,8 @@ const client = new Client({
   },
 });
 
-metro.catch(console.error);
+metro.catch((err) => {
+  if (!(err instanceof SpawnFailure)) {
+    throw err;
+  }
+});
