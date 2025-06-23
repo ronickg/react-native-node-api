@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import path from "node:path";
 
-import { spawn } from "bufout";
+import { spawn, SpawnFailure } from "bufout";
 
 // Ideally, we would just use "concurrently" or "npm-run-all" to run these in parallel but:
 // - "concurrently" hangs the emulator action on Ubuntu
@@ -41,4 +41,8 @@ const build = spawn(
   }
 );
 
-Promise.all([metro, build]).catch(console.error);
+Promise.all([metro, build]).catch((err) => {
+  if (!(err instanceof SpawnFailure)) {
+    throw err;
+  }
+});
