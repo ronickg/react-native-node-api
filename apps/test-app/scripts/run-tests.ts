@@ -19,7 +19,7 @@ const env = {
   FORCE_COLOR: "1",
 };
 
-const metro = spawn("npx", ["react-native", "start", "--no-interactive"], {
+const metro = spawn("react-native", ["start", "--no-interactive"], {
   cwd,
   stdio: "inherit",
   outputPrefix: "[metro] ",
@@ -27,9 +27,8 @@ const metro = spawn("npx", ["react-native", "start", "--no-interactive"], {
 });
 
 const build = spawn(
-  "npx",
+  "react-native",
   [
-    "react-native",
     `run-${platform}`,
     "--no-packager",
     ...(platform === "android" ? ["--active-arch-only"] : []),
