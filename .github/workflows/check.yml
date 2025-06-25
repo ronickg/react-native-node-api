@@ -1,10 +1,15 @@
 name: Check
 
+env:
+  # Version here should match the one in React Native template and packages/cmake-rn/src/cli.ts
+  NDK_VERSION: 27.1.12297006
+
 on:
   push:
     branches:
       - main
   pull_request:
+    types: [labeled, opened, synchronize, reopened]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -21,13 +26,38 @@ jobs:
           node-version: lts/jod
       - run: npm ci
       - run: npm run lint
-  test:
+  unit-tests:
     strategy:
       fail-fast: false
       matrix:
-        runner: [ubuntu-latest, windows-latest, macos-latest]
-    name: Test (${{ matrix.runner }})
+        runner:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
     runs-on: ${{ matrix.runner }}
+    name: Unit tests (${{ matrix.runner }})
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: lts/jod
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        java-version: "17"
+        distribution: "temurin"
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+      with:
+        packages: tools platform-tools ndk;${{ env.NDK_VERSION }}
+    - run: rustup target add x86_64-linux-android aarch64-linux-android armv7-linux-androideabi i686-linux-android aarch64-apple-ios-sim
+    - run: npm ci
+    - run: npm run bootstrap
+    - run: npm test
+  test-ios:
+    if: github.ref == 'refs/heads/main' || contains(github.event.pull_request.labels.*.name, 'Apple 🍎')
+    name: Test app (iOS)
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -40,9 +70,83 @@ jobs:
           distribution: "temurin"
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
-        # Version here should match the one in React Native template and packages/cmake-rn/src/cli.ts
-      - run: sdkmanager --install "ndk;27.1.12297006"
-      - run: rustup target add x86_64-linux-android aarch64-linux-android aarch64-apple-ios-sim
+        with:
+          packages: tools platform-tools ndk;${{ env.NDK_VERSION }}
+      - run: rustup target add x86_64-linux-android aarch64-linux-android armv7-linux-androideabi i686-linux-android aarch64-apple-ios-sim
       - run: npm ci
       - run: npm run bootstrap
-      - run: npm test
+      - run: npm run pod-install
+        working-directory: apps/test-app
+      - name: Run tests (iOS)
+        run: npm run test:ios
+        # TODO: Enable release mode when it works
+        # run: npm run test:ios -- --mode Release
+        working-directory: apps/test-app
+  test-android:
+    if: github.ref == 'refs/heads/main' || contains(github.event.pull_request.labels.*.name, 'Android 🤖')
+    name: Test app (Android)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/jod
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: "17"
+          distribution: "temurin"
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: tools platform-tools ndk;${{ env.NDK_VERSION }}
+      - run: rustup target add x86_64-linux-android aarch64-linux-android armv7-linux-androideabi i686-linux-android aarch64-apple-ios-sim
+      - run: npm ci
+      - run: npm run bootstrap
+      - name: Clone patched Hermes version
+        shell: bash
+        run: |
+          REACT_NATIVE_OVERRIDE_HERMES_DIR=$(npx react-native-node-api vendor-hermes --silent)
+          echo "REACT_NATIVE_OVERRIDE_HERMES_DIR=$REACT_NATIVE_OVERRIDE_HERMES_DIR" >> $GITHUB_ENV
+        working-directory: apps/test-app
+      # - name: Setup Android Emulator cache
+      #   uses: actions/cache@v4
+      #   id: avd-cache
+      #   with:
+      #     path: |
+      #       ~/.android/avd/*
+      #       ~/.android/adb*
+      #     key: ${{ runner.os }}-avd-29
+      # See https://github.com/marketplace/actions/android-emulator-runner#running-hardware-accelerated-emulators-on-linux-runners
+      - name: Enable KVM group perms
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Build weak-node-api for all architectures
+        run: npm run build-weak-node-api -- --android
+        working-directory: packages/host
+      - name: Build ferric-example for all architectures
+        run: npm run build -- --android
+        working-directory: packages/ferric-example
+      - name: Run tests (Android)
+        timeout-minutes: 75
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 29
+          force-avd-creation: false
+          emulator-options: -no-snapshot-save -no-metrics -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          arch: x86
+          ndk: ${{ env.NDK_VERSION }}
+          cmake: 3.22.1
+          working-directory: apps/test-app
+          script: |
+            # Setup port forwarding to Mocha Remote
+            adb reverse tcp:8090 tcp:8090
+            # Uninstall the app if already in the snapshot (unlikely but could result in a signature mismatch failure)
+            adb uninstall com.microsoft.reacttestapp || true
+            # Build, install and run the app
+            npm run test:android -- --mode Release
+            # Wait a bit for the sub-process to terminate, before terminating the emulator
+            sleep 5
