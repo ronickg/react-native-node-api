@@ -3,6 +3,7 @@
 *.xcworkspace/
 *.zip
 .gradle/
+.kotlin/
 .idea/
 .vs/
 .xcode.env
