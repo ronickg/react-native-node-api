@@ -27,15 +27,24 @@ public:
 
   NodeAddon& loadAddon(std::string packageName, std::string subpath);
   facebook::jsi::Value instantiateAddonInRuntime(facebook::jsi::Runtime &rt, NodeAddon &addon);
-  bool handleOldNapiModuleRegister(napi_addon_register_func addonInitFunc);
+  static bool handleOldNapiModuleRegister(napi_addon_register_func addonInitFunc);
 
   using LoaderPolicy = PosixLoader; // FIXME: HACK: This is temporary workaround
                                     // for my lazyness (works on iOS and Android)
 private:
+  struct DeprecatedAddonInfo {
+    napi_addon_register_func initFunc_;
+    std::string addonPath_;
+    void* addonBaseAddress_;
+    std::string symbolName_;
+  };
   bool tryLoadAddonAsDynamicLib(NodeAddon &addon, const std::string &path);
   napi_status createAddonDescriptor(napi_env env, napi_value exports, napi_value *outDescriptor);
   napi_status storeAddonByFullPath(napi_env env, napi_value global, const std::string &fqap, napi_value descriptor);
   facebook::jsi::Value lookupAddonByFullPath(facebook::jsi::Runtime &rt, const std::string &fqap);
+
+  static std::mutex s_registryMutex;
+  static std::vector<DeprecatedAddonInfo> s_deprecatedAddons;
 
   static constexpr const char *kInternalRegistryKey = "$NodeApiHost";
   std::unordered_map<std::string, NodeAddon> trackedAddons_;

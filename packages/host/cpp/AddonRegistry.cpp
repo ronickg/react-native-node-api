@@ -62,6 +62,9 @@ void sanitizeLibraryNameInplace(std::string &name) {
 
 namespace callstack::nodeapihost {
 
+std::mutex AddonRegistry::s_registryMutex;
+std::vector<AddonRegistry::DeprecatedAddonInfo> AddonRegistry::s_deprecatedAddons;
+
 AddonRegistry::NodeAddon& AddonRegistry::loadAddon(std::string packageName,
                                                    std::string subpath) {
   const std::string fqan = packageName + subpath.substr(1);
@@ -89,32 +92,34 @@ AddonRegistry::NodeAddon& AddonRegistry::loadAddon(std::string packageName,
 }
 
 bool AddonRegistry::tryLoadAddonAsDynamicLib(NodeAddon &addon, const std::string &path) {
-  {
-    // There can be only a SINGLE pending module (the same limitation
-    // has Node.js since Jan 28, 2014 commit 76b9846, see link below).
-    // We MUST clear it before attempting to load next addon.
-    // https://github.com/nodejs/node/blob/76b98462e589a69d9fd48ccb9fb5f6e96b539715/src/node.cc#L1949)
-    assert(nullptr == pendingRegistration_);
-  }
-
   // Load addon as dynamic library
   typename LoaderPolicy::Module library = LoaderPolicy::loadLibrary(path.c_str());
   if (nullptr != library) {
     addon.moduleApiVersion_ = NODE_API_DEFAULT_MODULE_API_VERSION;
-    if (nullptr != pendingRegistration_) {
-      // there is a pending addon that used the deprecated `napi_register_module()`
-      addon.initFun_ = pendingRegistration_;
-    } else {
-      // pending addon remains empty, we should look for the symbols...
-      typename LoaderPolicy::Symbol initFn = LoaderPolicy::getSymbol(library, "napi_register_module_v1");
-      if (nullptr != initFn) {
-        addon.initFun_ = (napi_addon_register_func)initFn;
-        // This solves https://github.com/callstackincubator/react-native-node-api-modules/issues/4
-        typename LoaderPolicy::Symbol getVersionFn = LoaderPolicy::getSymbol(library, "node_api_module_get_api_version_v1");
-        if (nullptr != getVersionFn) {
-          addon.moduleApiVersion_ = ((node_api_addon_get_api_version_func)getVersionFn)();
+
+    typename LoaderPolicy::Symbol initFn = LoaderPolicy::getSymbol(library, "napi_register_module_v1");
+    if (nullptr == initFn) {
+      // is there a pending addon that used the deprecated `napi_register_module()`?
+      std::lock_guard<std::mutex> lock(s_registryMutex);
+      for (const auto &addonInfo : s_deprecatedAddons) {
+        initFn = LoaderPolicy::getSymbol(library, addonInfo.symbolName_.c_str());
+        if (nullptr != initFn && addonInfo.initFunc_ == initFn) {
+          // We found the pending addon, and now we have the Module handle!
+          break;
         }
       }
+
+      if (nullptr == initFn) {
+        // Unable to match symbol... Maybe the init function's symbol was not exported?
+        return false;
+      }
+    }
+    addon.initFun_ = (napi_addon_register_func)initFn;
+
+    // Try to get the version (even if `napi_register_module_v1` wasn't found)
+    typename LoaderPolicy::Symbol getVersionFn = LoaderPolicy::getSymbol(library, "node_api_module_get_api_version_v1");
+    if (nullptr != getVersionFn) {
+      addon.moduleApiVersion_ = ((node_api_addon_get_api_version_func)getVersionFn)();
     }
 
     if (nullptr != addon.initFun_) {
@@ -123,9 +128,6 @@ bool AddonRegistry::tryLoadAddonAsDynamicLib(NodeAddon &addon, const std::string
     }
   }
 
-  // We MUST clear the `pendingAddon_`, even when the module failed to load!
-  // See: https://github.com/nodejs/node/commit/a60056df3cad2867d337fc1d7adeebe66f89031a
-  pendingRegistration_ = nullptr;
   return addon.isLoaded();
 }
 
@@ -167,8 +169,33 @@ jsi::Value AddonRegistry::instantiateAddonInRuntime(jsi::Runtime &rt, NodeAddon 
 }
 
 bool AddonRegistry::handleOldNapiModuleRegister(napi_addon_register_func addonInitFunc) {
-  assert(nullptr == pendingRegistration_);
-  pendingRegistration_ = addonInitFunc;
+  // NOTE: In Node.js (since Jan 28, 2014 commit 76b9846), there can be only
+  // ONE pending module at a given time, which is supposed to be set during
+  // the execution of `dlopen()` or `LoadLibrary()`. This also implies that
+  // every addon can call `napi_module_regiser()` only once.
+  // https://github.com/nodejs/node/blob/76b98462e589a69d9fd48ccb9fb5f6e96b539715/src/node.cc#L1949
+  // However, there are platforms out there (looking at you iOS) whose dynamic
+  // linker likes to preload dynamic libraries and frameworks during process
+  // startup, and thus violating this assumption (especially, when those
+  // contain initializer/constructor functions)... As a workaround, we gonna
+  // query for the name of init function (hopefully it's exported) and store
+  // it in separate registry, for a later lookup. Sadly, `dladdr()` is not
+  // a POSIX function, but available at least on Linux and Apple platforms.
+  Dl_info moduleInfo;
+  dladdr(reinterpret_cast<void *>(addonInitFunc), &moduleInfo);
+
+  DeprecatedAddonInfo addonInfo {
+    .initFunc_ = addonInitFunc,
+    .addonPath_ = moduleInfo.dli_fname,
+    .addonBaseAddress_ = moduleInfo.dli_fbase,
+    .symbolName_ = moduleInfo.dli_sname,
+  };
+
+  {
+    std::lock_guard<std::mutex> lock(s_registryMutex);
+    s_deprecatedAddons.push_back(addonInfo);
+  }
+
   return true;
 }
 
