@@ -79,9 +79,14 @@ const cleanOption = new Option(
   "Delete the build directory before configuring the project"
 );
 
-const outPathOption = new Option(
+const outOption = new Option(
   "--out <path>",
   "Specify the output directory to store the final build artifacts"
+);
+
+const outToBuildOption = new Option(
+  "--out-to-build",
+  "Use `./build/${configuration}` directory as output (like `node-gyp` and `cmake-js`)"
 );
 
 const ndkVersionOption = new Option(
@@ -118,7 +123,8 @@ export const program = new Command("cmake-rn")
   .addOption(androidOption)
   .addOption(appleOption)
   .addOption(buildPathOption)
-  .addOption(outPathOption)
+  .addOption(outOption)
+  .addOption(outToBuildOption)
   .addOption(cleanOption)
   .addOption(ndkVersionOption)
   .addOption(androidSdkVersionOption)
@@ -167,6 +173,14 @@ export const program = new Command("cmake-rn")
             chalk.dim("(" + [...triplets].join(", ") + ")")
           );
         }
+      }
+
+      if (globalContext.outToBuild) {
+        assert(
+          globalContext.out === undefined,
+          "Cannot use --out with --out-to-build"
+        );
+        globalContext.out = path.join(buildPath, globalContext.configuration);
       }
 
       const tripletContext = [...triplets].map((triplet) => {
