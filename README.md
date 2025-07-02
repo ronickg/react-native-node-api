@@ -25,7 +25,7 @@
 > [!NOTE]
 > This library only works for iOS and Android and we want to eventually support React Native for Windows, macOS, visionOS and other out-of-tree platforms too.
 
-See the document on ["how it works"](./docs/HOW_IT_WORKS.md) for a detailed description of what it's like to write native modules using this package.
+See the document on ["how it works"](./docs/HOW-IT-WORKS.md) for a detailed description of what it's like to write native modules using this package.
 
 ## Packages
 

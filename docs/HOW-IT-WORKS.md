@@ -2,6 +2,10 @@
 
 This document will outline what happens throughout the various parts of the system, when the app calls the `add` method on the library introduced in the ["usage" document](./USAGE.md).
 
+<!-- TODO: Add Clone this repo: ... -->
+<!-- TODO: Add C++ code snippet -->
+<!-- TODO: Add JS code snippet on requiring and calling it -->
+
 ## `my-app` makes an `import`
 
 Everything starts from the consuming app importing the `calculator-lib`.
