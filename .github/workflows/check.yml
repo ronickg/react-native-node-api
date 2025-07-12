@@ -9,7 +9,7 @@ on:
     branches:
       - main
   pull_request:
-    types: [labeled, opened, synchronize, reopened]
+    types: [opened, synchronize, reopened]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -37,23 +37,23 @@ jobs:
     runs-on: ${{ matrix.runner }}
     name: Unit tests (${{ matrix.runner }})
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
-      with:
-        node-version: lts/jod
-    - name: Set up JDK 17
-      uses: actions/setup-java@v3
-      with:
-        java-version: "17"
-        distribution: "temurin"
-    - name: Setup Android SDK
-      uses: android-actions/setup-android@v3
-      with:
-        packages: tools platform-tools ndk;${{ env.NDK_VERSION }}
-    - run: rustup target add x86_64-linux-android aarch64-linux-android armv7-linux-androideabi i686-linux-android aarch64-apple-ios-sim
-    - run: npm ci
-    - run: npm run bootstrap
-    - run: npm test
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/jod
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: "17"
+          distribution: "temurin"
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: tools platform-tools ndk;${{ env.NDK_VERSION }}
+      - run: rustup target add x86_64-linux-android aarch64-linux-android armv7-linux-androideabi i686-linux-android aarch64-apple-ios-sim
+      - run: npm ci
+      - run: npm run bootstrap
+      - run: npm test
   test-ios:
     if: github.ref == 'refs/heads/main' || contains(github.event.pull_request.labels.*.name, 'Apple 🍎')
     name: Test app (iOS)
