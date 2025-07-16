@@ -1,5 +1,5 @@
 {
-  "name": "react-native-node-api-test-app",
+  "name": "@react-native-node-api/test-app",
   "private": true,
   "version": "0.1.1",
   "scripts": {
