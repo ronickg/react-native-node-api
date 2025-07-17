@@ -279,7 +279,6 @@ export const MAGIC_FILENAME = "react-native-node-api-module";
  * Default patterns to use when excluding paths from the search for Node-API modules.
  */
 export const DEFAULT_EXCLUDE_PATTERNS = [
-  /(^|\/)react-native-node-api\//,
   /(^|\/)node_modules\//,
   /(^|\/).git\//,
 ];
@@ -327,20 +326,32 @@ export async function findNodeApiModulePaths(
   const result: string[] = [];
   const pendingResults: Promise<string[]>[] = [];
 
-  for await (const dirent of await fs.promises.opendir(candidatePath)) {
-    if (
-      dirent.isFile() &&
-      dirent.name === MAGIC_FILENAME &&
-      hasPlatformExtension(platform, candidatePath)
-    ) {
-      result.push(candidatePath);
-    } else if (dirent.isDirectory()) {
-      // Traverse into the child directory
-      // Pushing result into a list instead of awaiting immediately to parallelize the search
-      pendingResults.push(
-        findNodeApiModulePaths(options, path.join(suffix, dirent.name))
-      );
+  try {
+    for await (const dirent of await fs.promises.opendir(candidatePath)) {
+      if (
+        dirent.isFile() &&
+        dirent.name === MAGIC_FILENAME &&
+        hasPlatformExtension(platform, candidatePath)
+      ) {
+        result.push(candidatePath);
+      } else if (dirent.isDirectory()) {
+        // Traverse into the child directory
+        // Pushing result into a list instead of awaiting immediately to parallelize the search
+        pendingResults.push(
+          findNodeApiModulePaths(options, path.join(suffix, dirent.name))
+        );
+      }
     }
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      "code" in error &&
+      (error.code === "ENOENT" || error.code === "EACCES")
+    ) {
+      // Gracefully handling issues with reading directories
+      return [];
+    }
+    throw error;
   }
   const childResults = await Promise.all(pendingResults);
   result.push(...childResults.flatMap((filePath) => filePath));
@@ -348,14 +359,24 @@ export async function findNodeApiModulePaths(
 }
 
 /**
+ * Default package names to use when excluding packages from the search for Node-API modules.
+ */
+export const DEFAULT_EXCLUDE_PACKAGES = [
+  "react-native-node-api", // The host package itself
+  "react-native", // React Native core
+];
+
+/**
  * Finds all dependencies of the app package and their xcframeworks.
  */
 export async function findNodeApiModulePathsByDependency({
   fromPath,
   includeSelf,
+  excludePackages = DEFAULT_EXCLUDE_PACKAGES,
   ...options
 }: FindNodeApiModuleOptions & {
   includeSelf: boolean;
+  excludePackages?: string[];
 }) {
   // Find the location of each dependency
   const packagePathsByName = findPackageDependencyPaths(fromPath);
@@ -368,8 +389,9 @@ export async function findNodeApiModulePathsByDependency({
 
   // Find all their node api module paths
   const resultEntries = await Promise.all(
-    Object.entries(packagePathsByName).map(
-      async ([dependencyName, dependencyPath]) => {
+    Object.entries(packagePathsByName)
+      .filter(([name]) => !excludePackages.includes(name))
+      .map(async ([dependencyName, dependencyPath]) => {
         // Make all the xcframeworks relative to the dependency path
         const absoluteModulePaths = await findNodeApiModulePaths({
           fromPath: dependencyPath,
@@ -384,8 +406,7 @@ export async function findNodeApiModulePathsByDependency({
             ),
           },
         ] as const;
-      }
-    )
+      })
   );
   // Return an object by dependency name
   return Object.fromEntries(

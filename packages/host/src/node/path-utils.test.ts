@@ -12,6 +12,7 @@ import {
   getLibraryName,
   isNodeApiModule,
   stripExtension,
+  findNodeApiModulePathsByDependency,
 } from "./path-utils.js";
 import { setupTempDirectory } from "./test-utils.js";
 
@@ -62,9 +63,9 @@ describe("isNodeApiModule", () => {
     assert(isNodeApiModule(path.join(tempDirectoryPath, "addon.node")));
   });
 
-  // there is no way to set ACLs on directories in Node.js on Windows with brittle powershell commands
   it(
     "returns false when directory cannot be read due to permissions",
+    // Skipping on Windows because there is no way to set ACLs on directories in Node.js on Windows without brittle powershell commands
     { skip: process.platform === "win32" },
     (context) => {
       const tempDirectoryPath = setupTempDirectory(context, {
@@ -268,24 +269,30 @@ describe("getLibraryName", () => {
 describe("findPackageDependencyPaths", () => {
   it("should find package dependency paths", (context) => {
     const tempDir = setupTempDirectory(context, {
-      "node_modules/lib-a/package.json": JSON.stringify({
-        name: "lib-a",
-        main: "index.js",
-      }),
-      "node_modules/lib-a/index.js": "",
-      "test-package/node_modules/lib-b/package.json": JSON.stringify({
-        name: "lib-b",
-        main: "index.js",
-      }),
-      "test-package/node_modules/lib-b/index.js": "",
-      "test-package/package.json": JSON.stringify({
-        name: "test-package",
-        dependencies: {
-          "lib-a": "^1.0.0",
-          "lib-b": "^1.0.0",
+      "node_modules/lib-a": {
+        "package.json": JSON.stringify({
+          name: "lib-a",
+          main: "index.js",
+        }),
+        "index.js": "",
+      },
+      "test-package": {
+        "package.json": JSON.stringify({
+          name: "test-package",
+          dependencies: {
+            "lib-a": "^1.0.0",
+            "lib-b": "^1.0.0",
+          },
+        }),
+        "src/index.js": "console.log('Hello, world!')",
+        "node_modules/lib-b": {
+          "package.json": JSON.stringify({
+            name: "lib-b",
+            main: "index.js",
+          }),
+          "index.js": "",
         },
-      }),
-      "test-package/src/index.js": "console.log('Hello, world!')",
+      },
     });
 
     const result = findPackageDependencyPaths(
@@ -366,6 +373,72 @@ describe("findNodeApiModulePaths", () => {
     assert.deepEqual(result, [
       path.join(tempDir, "node_modules/root.apple.node"),
     ]);
+  });
+
+  it(
+    "returns empty when directory cannot be read due to permissions",
+    // Skipping on Windows because there is no way to set ACLs on directories in Node.js on Windows without brittle powershell commands
+    { skip: process.platform === "win32" },
+    async (context) => {
+      const tempDir = setupTempDirectory(context, {
+        "addon.apple.node/react-native-node-api-module": "",
+      });
+
+      removeReadPermissions(tempDir);
+      try {
+        const result = findNodeApiModulePaths({
+          fromPath: tempDir,
+          platform: "apple",
+        });
+        assert.deepEqual(await result, []);
+      } finally {
+        restoreReadPermissions(tempDir);
+      }
+    }
+  );
+});
+
+describe("findNodeApiModulePathsByDependency", () => {
+  it.only("should find Node-API paths by dependency (excluding certain packages)", async (context) => {
+    const packagesNames = ["lib-a", "lib-b", "lib-c"];
+    const tempDir = setupTempDirectory(context, {
+      "app/package.json": JSON.stringify({
+        name: "app",
+        dependencies: Object.fromEntries(
+          packagesNames.map((packageName) => [packageName, "^1.0.0"])
+        ),
+      }),
+      ...Object.fromEntries(
+        packagesNames.map((packageName) => [
+          `app/node_modules/${packageName}`,
+          {
+            "package.json": JSON.stringify({
+              name: packageName,
+              main: "index.js",
+            }),
+            "index.js": "",
+            "addon.apple.node/react-native-node-api-module": "",
+          },
+        ])
+      ),
+    });
+
+    const result = await findNodeApiModulePathsByDependency({
+      fromPath: path.join(tempDir, "app"),
+      platform: "apple",
+      includeSelf: false,
+      excludePackages: ["lib-a"],
+    });
+    assert.deepEqual(result, {
+      "lib-b": {
+        path: path.join(tempDir, "app/node_modules/lib-b"),
+        modulePaths: ["addon.apple.node"],
+      },
+      "lib-c": {
+        path: path.join(tempDir, "app/node_modules/lib-c"),
+        modulePaths: ["addon.apple.node"],
+      },
+    });
   });
 });
 
