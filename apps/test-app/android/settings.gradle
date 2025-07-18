@@ -21,5 +21,5 @@ apply(from: {
 applyTestAppSettings(settings)
 
 // customize the path to match your node_modules location
-apply(from: "../../../node_modules/react-native-node-api/android/consumerSettings.gradle")
+apply(from: "../../../node_modules/react-native-node-api/android/app-settings.gradle")
 applyNodeAPISettings(settings)

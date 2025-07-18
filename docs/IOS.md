@@ -1,7 +1,3 @@
 # iOS support
 
-## iOS setup: script for adjusting environment variables
-
-To integrate automatic setup of Hermes engine, a special env variable (`REACT_NATIVE_OVERRIDE_HERMES_DIR`) must be set to a proper path. We provide the script `react-native-node-api vendor-hermes --silent` which will output a single line, the path to Hermes directory.
-
-Each time you run XCode, make sure this is in place.
+Because we're using a version of Hermes patched with Node-API support, we need to build React Native from source. Special environment variables (`REACT_NATIVE_OVERRIDE_HERMES_DIR`, `BUILD_FROM_SOURCE`) must be set to the path of a Hermes engine with Node-API support. The podspec of the iOS Pod already includes instrumentation to configure React Native appropriately via [`patch-hermes.rb`](../packages/host/scripts/patch-hermes.rb).

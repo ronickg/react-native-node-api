@@ -6,7 +6,7 @@ ext.applyNodeAPISettings = { DefaultSettings settings ->
     do {
         def p = searchDirectory.resolve("node_modules/react-native")
         if (p.toFile().exists()) {
-            println "[RN-NAPI] Found React Native in ${p.toRealPath().toString()}"
+            println "[Node-API] !!! PATCHING HERMES WITH NODE-API SUPPORT !!! Found React Native in ${p.toRealPath().toString()}"
 
             includeBuild(p.toRealPath().toString()) {
                 dependencySubstitution {
