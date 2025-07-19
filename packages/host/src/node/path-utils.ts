@@ -380,6 +380,7 @@ export async function findNodeApiModulePathsByDependency({
 }) {
   // Find the location of each dependency
   const packagePathsByName = findPackageDependencyPaths(fromPath);
+  console.log(packagePathsByName)
   if (includeSelf) {
     const packageRoot = packageDirectorySync({ cwd: fromPath });
     assert(packageRoot, `Could not find package root from ${fromPath}`);

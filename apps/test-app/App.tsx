@@ -10,6 +10,8 @@ import {
 
 import nodeAddonExamples from "@react-native-node-api/node-addon-examples";
 
+console.log(nodeBcrypt)
+
 function loadTests() {
   for (const [suiteName, examples] of Object.entries(nodeAddonExamples)) {
     describe(suiteName, () => {
@@ -29,6 +31,14 @@ function loadTests() {
       if (result !== 4) {
         throw new Error(`Expected 1 + 3 to equal 4, but got ${result}`);
       }
+    });
+  });
+
+  describe("rnbcrypt", () => {
+    it("exports a callable sum function", () => {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const exampleAddon = require("rnbcrypt");
+      console.log(exampleAddon)
     });
   });
 }

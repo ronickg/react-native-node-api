@@ -1,0 +1,3 @@
+[submodule "packages/rnbcrypt/vendor/node-bcrypt"]
+	path = packages/rnbcrypt/vendor/node-bcrypt
+	url = https://github.com/kelektiv/node.bcrypt.js.git

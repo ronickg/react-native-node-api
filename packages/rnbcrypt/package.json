@@ -1,0 +1,22 @@
+{
+  "name": "@react-native-node-api/rnbcrypt",
+  "private": true,
+  "version": "0.1.0",
+  "homepage": "https://github.com/callstackincubator/react-native-node-api",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/callstackincubator/react-native-node-api.git",
+    "directory": "packages/rnbcrypt"
+  },
+  "main": "vendor/node-bcrypt/bcrypt.js",
+  "scripts": {
+    "gyp-to-cmake": "gyp-to-cmake ./vendor/node-bcrypt",
+    "build": "npm run gyp-to-cmake && tsx scripts/build.mts",
+    "bootstrap": "npm run build"
+  },
+  "devDependencies": {
+    "cmake-rn": "*",
+    "gyp-to-cmake": "*",
+    "read-pkg": "^9.0.1"
+  }
+}
