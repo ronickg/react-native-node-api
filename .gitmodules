@@ -1,0 +1,3 @@
+[submodule "packages/react-native-sharp/vendor/sharp"]
+	path = packages/react-native-sharp/vendor/sharp
+	url = https://github.com/lovell/sharp.git

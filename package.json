@@ -10,7 +10,8 @@
     "packages/ferric",
     "packages/host",
     "packages/node-addon-examples",
-    "packages/ferric-example"
+    "packages/ferric-example",
+    "packages/react-native-sharp"
   ],
   "homepage": "https://github.com/callstackincubator/react-native-node-api#readme",
   "scripts": {

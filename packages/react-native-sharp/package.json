@@ -1,0 +1,25 @@
+{
+  "name": "react-native-sharp",
+  "private": true,
+  "version": "0.1.0",
+  "homepage": "https://github.com/callstackincubator/react-native-node-api",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/callstackincubator/react-native-node-api.git",
+    "directory": "packages/react-native-sharp"
+  },
+  "main": "index.js",
+  "types": "index.d.ts",
+  "scripts": {
+    "copy-examples": "tsx scripts/copy-examples.mts",
+    "gyp-to-cmake": "gyp-to-cmake ./vendor/sharp/src",
+    "build": "npm run gyp-to-cmake && npm run build && tsx scripts/build-examples.mts",
+    "bootstrap": "npm run build"
+  },
+  "devDependencies": {
+    "cmake-rn": "*",
+    "node-addon-examples": "github:nodejs/node-addon-examples#4213d4c9d07996ae68629c67926251e117f8e52a",
+    "gyp-to-cmake": "*",
+    "read-pkg": "^9.0.1"
+  }
+}
