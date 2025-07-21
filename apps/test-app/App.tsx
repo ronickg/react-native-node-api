@@ -10,8 +10,6 @@ import {
 
 import nodeAddonExamples from "@react-native-node-api/node-addon-examples";
 
-console.log(nodeBcrypt)
-
 function loadTests() {
   for (const [suiteName, examples] of Object.entries(nodeAddonExamples)) {
     describe(suiteName, () => {
