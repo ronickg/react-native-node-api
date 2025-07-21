@@ -66,4 +66,4 @@ The main purpose is to use these as tests to verify the implementation. We choos
 
 ### [`@react-native-node-api/test-app`](apps/test-app)
 
-A test app using `react-native-test-app` to exercise the implementation of
+A test app using `react-native-test-app` to exercise the implementation of it all.
