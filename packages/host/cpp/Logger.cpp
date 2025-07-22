@@ -25,7 +25,7 @@ void log_debug(const char *format, ...) {
   fprintf(stderr, "\n");
 #else
   // Fallback for other platforms
-  fprintf(stderr, "[NodeApiHost] ");
+  fprintf(stdout, "[NodeApiHost] ");
   vfprintf(stdout, format, args);
   fprintf(stdout, "\n");
 #endif
