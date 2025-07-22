@@ -127,7 +127,8 @@ export const platform: Platform<Target[], AppleOpts> = {
     ];
   },
   buildArgs() {
-    return [];
+    // We expect the final application to sign these binaries
+    return ["CODE_SIGNING_ALLOWED=NO"];
   },
   isSupportedByHost: function (): boolean | Promise<boolean> {
     return process.platform === "darwin";
