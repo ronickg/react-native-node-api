@@ -18,6 +18,7 @@
     "bootstrap": "npm run copy-tests && npm run gyp-to-cmake && npm run build-tests && npm run bundle"
   },
   "devDependencies": {
+    "bufout": "^0.3.2",
     "cmake-js": "^7.3.1",
     "cmake-rn": "*",
     "gyp-to-cmake": "*",

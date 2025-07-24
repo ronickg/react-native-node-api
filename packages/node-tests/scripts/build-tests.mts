@@ -1,15 +1,29 @@
-import { execSync } from "node:child_process";
+import path from "node:path";
+
+import { spawn, SpawnFailure } from "bufout";
 
 import { findCMakeProjects } from "./utils.mjs";
 
-const projectDirectories = findCMakeProjects();
+const rootPath = path.join(import.meta.dirname, "..");
+const projectPaths = findCMakeProjects();
 
-for (const projectDirectory of projectDirectories) {
-  console.log(
-    `Running "cmake-rn" in ${projectDirectory} to build for React Native`
-  );
-  execSync("cmake-rn", {
-    cwd: projectDirectory,
-    stdio: "inherit",
-  });
-}
+await Promise.all(
+  projectPaths.map(async (projectPath) => {
+    console.log(
+      `Running "cmake-rn" in ${path.relative(
+        rootPath,
+        projectPath
+      )} to build for React Native`
+    );
+    await spawn("cmake-rn", [], { cwd: projectPath, outputMode: "buffered" });
+  })
+).catch((err) => {
+  process.exitCode = 1;
+  if (err instanceof SpawnFailure) {
+    err.flushOutput("both");
+  } else if (err instanceof Error) {
+    console.error(err.message);
+  } else {
+    console.error(err);
+  }
+});
