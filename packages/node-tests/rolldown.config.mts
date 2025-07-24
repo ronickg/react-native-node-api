@@ -4,9 +4,6 @@ import path from "node:path";
 
 import { defineConfig, type RolldownOptions } from "rolldown";
 import { aliasPlugin, replacePlugin } from "rolldown/experimental";
-import { babel } from "@rollup/plugin-babel";
-
-import nodeApiBabelPlugin from "react-native-node-api/babel-plugin";
 
 function readGypTargetNames(gypFilePath: string): string[] {
   const contents = JSON.parse(fs.readFileSync(gypFilePath, "utf-8")) as unknown;
@@ -50,24 +47,21 @@ function testBundle(
         Object.fromEntries(
           targetNames.map((targetName) => [
             `require(\`./build/\${common.buildType}/${targetName}\`)`,
-            `require('./build/Release/${targetName}')`,
+            `require("./build/Release/${targetName}")`,
           ])
         ),
         {
           delimiters: ["", ""],
         }
       ),
-      // Use the babel plugin to transform require statements for addons before they get resolved
-      babel({
-        babelHelpers: "bundled",
-        plugins: [nodeApiBabelPlugin],
-      }),
       replacePlugin(
-        {
-          // Replace "__require" statement with a regular "require" to allow Metro to resolve it
-          '__require("react-native-node-api")':
-            'require("react-native-node-api")',
-        },
+        Object.fromEntries(
+          targetNames.map((targetName) => [
+            // Replace "__require" statement with a regular "require" to allow Metro to resolve it
+            `__require("./build/Release/${targetName}")`,
+            `require("./build/Release/${targetName}")`,
+          ])
+        ),
         {
           delimiters: ["", ""],
         }
@@ -81,7 +75,7 @@ function testBundle(
         ],
       }),
     ],
-    external: ["react-native-node-api"],
+    external: targetNames.map((targetName) => `./build/Release/${targetName}`),
   }));
 }
 

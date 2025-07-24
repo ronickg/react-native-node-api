@@ -18,7 +18,6 @@
     "bootstrap": "npm run copy-tests && npm run gyp-to-cmake && npm run build-tests && npm run bundle"
   },
   "devDependencies": {
-    "@rollup/plugin-babel": "^6.0.4",
     "cmake-js": "^7.3.1",
     "cmake-rn": "*",
     "gyp-to-cmake": "*",
