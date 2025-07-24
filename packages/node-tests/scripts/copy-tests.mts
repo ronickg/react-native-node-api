@@ -12,6 +12,8 @@ const ALLOW_LIST = [
   "js-native-api/common-inl.h",
   "js-native-api/entry_point.h",
   "js-native-api/2_function_arguments",
+  // "node-api/test_async",
+  // "node-api/test_buffer",
 ];
 
 console.log("Copying files to", TESTS_DIR);
@@ -35,10 +37,14 @@ if (!fs.existsSync(NODE_REPO_DIR)) {
     cwd: NODE_REPO_DIR,
   });
   // Enable sparse checkout
-  cp.execFileSync("git", ["sparse-checkout", "set", "test/js-native-api"], {
-    stdio: "inherit",
-    cwd: NODE_REPO_DIR,
-  });
+  cp.execFileSync(
+    "git",
+    ["sparse-checkout", "set", "test/js-native-api", "test/node-api"],
+    {
+      stdio: "inherit",
+      cwd: NODE_REPO_DIR,
+    }
+  );
   // Pull the latest changes from the master branch
   console.log("Pulling latest changes from Node.js repository...");
   cp.execFileSync("git", ["pull", "--depth=1", "origin", "main"], {
@@ -62,8 +68,4 @@ for (const src of ALLOW_LIST) {
 
   console.log("Copying from", srcPath, "to", destPath);
   fs.cpSync(srcPath, destPath, { recursive: true });
-}
-
-if (!fs.existsSync(path.join(TESTS_DIR, "common.js"))) {
-  // TODO: Perform a symlink of a common.js file from src/common.js
 }
