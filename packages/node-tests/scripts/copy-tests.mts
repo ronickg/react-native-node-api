@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import cp from "node:child_process";
 
-import { TESTS_DIR } from "./utils.mts";
+import { TESTS_DIR } from "./utils.mjs";
 
 const NODE_REPO_URL = "git@github.com:nodejs/node.git";
 const NODE_REPO_DIR = path.resolve(import.meta.dirname, "../node");

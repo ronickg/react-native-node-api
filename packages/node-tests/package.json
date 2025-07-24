@@ -13,17 +13,18 @@
   "scripts": {
     "copy-tests": "tsx scripts/copy-tests.mts",
     "gyp-to-cmake": "gyp-to-cmake ./tests",
-    "build": "tsx scripts/build-tests.mts",
+    "build-tests": "tsx scripts/build-tests.mts",
     "bundle": "rolldown -c rolldown.config.mts",
-    "copy-and-build": "npm run copy-tests && npm run gyp-to-cmake && npm run build",
-    "test": "npm run copy-and-build"
+    "bootstrap": "npm run copy-tests && npm run gyp-to-cmake && npm run build-tests && npm run bundle"
   },
   "devDependencies": {
+    "@rollup/plugin-babel": "^6.0.4",
     "cmake-js": "^7.3.1",
     "cmake-rn": "*",
     "gyp-to-cmake": "*",
     "prebuildify": "^6.0.1",
+    "react-native-node-api": "^0.3.2",
     "read-pkg": "^9.0.1",
-    "rolldown": "1.0.0-beta.26"
+    "rolldown": "1.0.0-beta.29"
   }
 }

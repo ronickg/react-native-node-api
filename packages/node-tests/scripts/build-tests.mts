@@ -1,6 +1,6 @@
 import { execSync } from "node:child_process";
 
-import { findCMakeProjects } from "./utils.mts";
+import { findCMakeProjects } from "./utils.mjs";
 
 const projectDirectories = findCMakeProjects();
 
@@ -12,11 +12,4 @@ for (const projectDirectory of projectDirectories) {
     cwd: projectDirectory,
     stdio: "inherit",
   });
-
-  console.log(`Running "cmake-js" in ${projectDirectory} to build for Node.js`);
-  execSync("cmake-js", {
-    cwd: projectDirectory,
-    stdio: "inherit",
-  });
-  console.log();
 }
