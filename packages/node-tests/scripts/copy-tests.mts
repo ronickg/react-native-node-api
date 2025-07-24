@@ -4,7 +4,7 @@ import cp from "node:child_process";
 
 import { TESTS_DIR } from "./utils.mjs";
 
-const NODE_REPO_URL = "git@github.com:nodejs/node.git";
+const NODE_REPO_URL = "https://github.com/nodejs/node.git";
 const NODE_REPO_DIR = path.resolve(import.meta.dirname, "../node");
 
 const ALLOW_LIST = [
