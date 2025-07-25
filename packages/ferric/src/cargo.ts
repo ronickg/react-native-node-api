@@ -76,7 +76,11 @@ type BuildOptions = {
 
 export async function build(options: BuildOptions) {
   const { target, configuration } = options;
-  await spawn("cargo", ["build", "--target", target], {
+  const args = ["build", "--target", target]
+  if (configuration.toLowerCase() === 'release') {
+    args.push('--release')
+  }
+  await spawn("cargo", args, {
     outputMode: "buffered",
     env: {
       ...process.env,
