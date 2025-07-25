@@ -2,7 +2,7 @@
   "name": "@react-native-node-api/node-tests",
   "description": "Harness for running the Node.js tests from https://github.com/nodejs/node/tree/main/test",
   "type": "commonjs",
-  "main": "dist/index.js",
+  "main": "tests.generated.js",
   "private": true,
   "homepage": "https://github.com/callstackincubator/react-native-node-api",
   "repository": {
@@ -15,7 +15,8 @@
     "gyp-to-cmake": "gyp-to-cmake ./tests",
     "build-tests": "tsx scripts/build-tests.mts",
     "bundle": "rolldown -c rolldown.config.mts",
-    "bootstrap": "node --run copy-tests && node --run gyp-to-cmake && node --run build-tests && node --run bundle"
+    "generate-entrypoint": "tsx scripts/generate-entrypoint.mts",
+    "bootstrap": "node --run copy-tests && node --run gyp-to-cmake && node --run build-tests && node --run bundle && node --run generate-entrypoint"
   },
   "devDependencies": {
     "bufout": "^0.3.2",
