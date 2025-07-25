@@ -23,19 +23,17 @@ function readGypTargetNames(gypFilePath: string): string[] {
   });
 }
 
-function testBundle(
-  testDirectory: string,
-  testFiles: string[]
-): RolldownOptions[] {
-  const gypFilePath = path.join(testDirectory, "binding.gyp");
+function testSuiteConfig(suitePath: string): RolldownOptions[] {
+  const testFiles = fs.globSync("*.js", {
+    cwd: suitePath,
+    exclude: ["*.bundle.js"],
+  });
+  const gypFilePath = path.join(suitePath, "binding.gyp");
   const targetNames = readGypTargetNames(gypFilePath);
   return testFiles.map((testFile) => ({
-    input: path.join(testDirectory, testFile),
+    input: path.join(suitePath, testFile),
     output: {
-      file: path.join(
-        testDirectory,
-        path.basename(testFile, ".js") + ".bundle.js"
-      ),
+      file: path.join(suitePath, path.basename(testFile, ".js") + ".bundle.js"),
     },
     resolve: {
       conditionNames: ["react-native"],
@@ -79,6 +77,17 @@ function testBundle(
   }));
 }
 
-export default defineConfig([
-  ...testBundle("tests/js-native-api/2_function_arguments", ["test.js"]),
-]);
+const suitePaths = fs
+  .globSync("tests/*/*", {
+    cwd: import.meta.dirname,
+    withFileTypes: true,
+  })
+  .filter((dirent) => dirent.isDirectory())
+  .map((dirent) =>
+    path.join(
+      path.relative(import.meta.dirname, dirent.parentPath),
+      dirent.name
+    )
+  );
+
+export default defineConfig(suitePaths.flatMap(testSuiteConfig));
