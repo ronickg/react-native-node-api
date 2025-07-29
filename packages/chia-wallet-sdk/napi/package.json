@@ -1,0 +1,65 @@
+{
+  "name": "chia-wallet-sdk",
+  "version": "0.27.2",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/xch-dev/chia-wallet-sdk"
+  },
+  "main": "index.js",
+  "types": "index.d.ts",
+  "packageManager": "pnpm@9.11.0",
+  "engines": {
+    "node": ">= 14"
+  },
+  "scripts": {
+    "artifacts": "napi artifacts",
+    "build": "napi build --platform --release",
+    "build:debug": "napi build --platform",
+    "build:macos-arm64": "napi build --platform --release --target aarch64-apple-darwin",
+    "build:macos-x64": "napi build --platform --release --target x86_64-apple-darwin",
+    "build:windows-x64": "napi build --platform --release --target x86_64-pc-windows-msvc",
+    "build:linux-x64": "napi build --platform --release --target x86_64-unknown-linux-gnu",
+    "build:linux-arm64": "napi build --platform --release --target aarch64-unknown-linux-gnu",
+    "build:rn": "npm run build:rn:targets && npm run package:rn",
+    "build:rn:targets": "npm run build:rn:ios && npm run build:rn:android",
+    "build:rn:ios": "cargo build --release --target aarch64-apple-ios && cargo build --release --target aarch64-apple-ios-sim",
+    "build:rn:android": "node scripts/build-android.js",
+    "build:rn:android:arm64": "node scripts/build-android.js aarch64-linux-android",
+    "build:rn:android:armv7": "node scripts/build-android.js armv7-linux-androideabi",
+    "build:rn:android:x86": "node scripts/build-android.js i686-linux-android",
+    "build:rn:android:x86_64": "node scripts/build-android.js x86_64-linux-android",
+    "package:rn": "node scripts/package-for-rn.js",
+    "copy-to-rn-package": "node scripts/copy-to-rn-package.js",
+    "prepublishOnly": "napi prepublish -t npm --no-gh-release",
+    "test": "ava",
+    "universal": "napi universalize",
+    "version": "napi version"
+  },
+  "napi": {
+    "binaryName": "chia-wallet-sdk",
+    "targets": [
+      "x86_64-pc-windows-msvc",
+      "x86_64-apple-darwin",
+      "x86_64-unknown-linux-gnu",
+      "aarch64-unknown-linux-gnu",
+      "aarch64-apple-darwin",
+      "universal-apple-darwin"
+    ]
+  },
+  "devDependencies": {
+    "@napi-rs/cli": "3.0.0-alpha.91",
+    "@types/node": "^22.13.1",
+    "ava": "^6.0.1",
+    "ts-node": "^10.9.2"
+  },
+  "ava": {
+    "timeout": "3m",
+    "extensions": [
+      "ts"
+    ],
+    "require": [
+      "ts-node/register"
+    ]
+  }
+}

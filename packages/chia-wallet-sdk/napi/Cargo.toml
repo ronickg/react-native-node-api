@@ -1,0 +1,76 @@
+[package]
+publish = false
+name = "chia-wallet-sdk-napi"
+version = "0.0.0"
+edition = "2021"
+license = "Apache-2.0"
+description = "Node.js bindings for the Chia Wallet SDK."
+authors = ["Brandon Haggstrom <me@rigidnetwork.com>"]
+homepage = "https://github.com/Rigidity/chia-wallet-sdk"
+repository = "https://github.com/Rigidity/chia-wallet-sdk"
+readme = { workspace = true }
+keywords = { workspace = true }
+categories = { workspace = true }
+
+[lints]
+workspace = true
+
+[lib]
+crate-type = ["cdylib"]
+doc = false
+test = false
+
+[dependencies]
+napi = { workspace = true, features = ["napi6", "async"] }
+napi-derive = { workspace = true }
+chia-sdk-bindings = { workspace = true, features = ["napi"] }
+bindy = { workspace = true, features = ["napi"] }
+bindy-macro = { workspace = true }
+
+[build-dependencies]
+napi-build = { workspace = true }
+
+[target.aarch64-unknown-linux-gnu.dependencies]
+openssl = { version = "0.10.73", features = ["vendored"] }
+openssl-sys = { version = "0.9.108", features = ["vendored"] }
+
+[target.aarch64-unknown-linux-musl.dependencies]
+openssl = { version = "0.10.73", features = ["vendored"] }
+openssl-sys = { version = "0.9.108", features = ["vendored"] }
+
+[target.x86_64-unknown-linux-gnu.dependencies]
+openssl = { version = "0.10.73", features = ["vendored"] }
+openssl-sys = { version = "0.9.108", features = ["vendored"] }
+
+[target.x86_64-unknown-linux-musl.dependencies]
+openssl = { version = "0.10.73", features = ["vendored"] }
+openssl-sys = { version = "0.9.108", features = ["vendored"] }
+
+# React Native iOS targets
+[target.aarch64-apple-ios.dependencies]
+openssl = { version = "0.10.73", features = ["vendored"] }
+openssl-sys = { version = "0.9.108", features = ["vendored"] }
+
+[target.aarch64-apple-ios-sim.dependencies]
+openssl = { version = "0.10.73", features = ["vendored"] }
+openssl-sys = { version = "0.9.108", features = ["vendored"] }
+
+# React Native Android targets - All 4 architectures
+[target.aarch64-linux-android.dependencies]
+openssl = { version = "0.10.73", features = ["vendored"] }
+openssl-sys = { version = "0.9.108", features = ["vendored"] }
+
+[target.armv7-linux-androideabi.dependencies]
+openssl = { version = "0.10.73", features = ["vendored"] }
+openssl-sys = { version = "0.9.108", features = ["vendored"] }
+
+[target.i686-linux-android.dependencies]
+openssl = { version = "0.10.73", features = ["vendored"] }
+openssl-sys = { version = "0.9.108", features = ["vendored"] }
+
+[target.x86_64-linux-android.dependencies]
+openssl = { version = "0.10.73", features = ["vendored"] }
+openssl-sys = { version = "0.9.108", features = ["vendored"] }
+
+[package.metadata.cargo-machete]
+ignored = ["bindy", "chia-sdk-bindings", "napi-derive"]

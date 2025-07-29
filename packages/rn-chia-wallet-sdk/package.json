@@ -1,0 +1,29 @@
+{
+  "name": "@react-native-node-api/rn-chia-wallet-sdk",
+  "private": true,
+  "type": "commonjs",
+  "version": "0.27.2",
+  "description": "React Native bindings for Chia Wallet SDK",
+  "homepage": "https://github.com/callstackincubator/react-native-node-api",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/callstackincubator/react-native-node-api.git",
+    "directory": "packages/rn-chia-wallet-sdk"
+  },
+  "main": "chia-wallet-sdk.js",
+  "types": "chia-wallet-sdk.d.ts",
+  "scripts": {
+    "copy-from-build": "node ../chia-wallet-sdk/napi/scripts/copy-to-rn-package.js"
+  },
+  "keywords": [
+    "react-native",
+    "node-api",
+    "chia",
+    "wallet",
+    "blockchain",
+    "cryptocurrency"
+  ],
+  "peerDependencies": {
+    "react-native": ">=0.60.0"
+  }
+}

@@ -1,0 +1,486 @@
+{
+  "Clvm": {
+    "type": "class",
+    "methods": {
+      "new": {
+        "type": "constructor"
+      },
+      "add_coin_spend": {
+        "args": {
+          "coin_spend": "CoinSpend"
+        }
+      },
+      "spend_coin": {
+        "args": {
+          "coin": "Coin",
+          "spend": "Spend"
+        }
+      },
+      "coin_spends": {
+        "return": "Vec<CoinSpend>"
+      },
+      "parse": {
+        "args": {
+          "program": "String"
+        },
+        "return": "Program"
+      },
+      "deserialize": {
+        "args": {
+          "value": "SerializedProgram"
+        },
+        "return": "Program"
+      },
+      "deserialize_with_backrefs": {
+        "args": {
+          "value": "SerializedProgram"
+        },
+        "return": "Program"
+      },
+      "cache": {
+        "args": {
+          "mod_hash": "Bytes32",
+          "value": "SerializedProgram"
+        },
+        "return": "Program"
+      },
+      "alloc": {
+        "stub_only": true,
+        "args": {
+          "value": "ClvmType"
+        },
+        "return": "Program"
+      },
+      "pair": {
+        "args": {
+          "first": "Program",
+          "rest": "Program"
+        },
+        "return": "Program"
+      },
+      "nil": {
+        "return": "Program"
+      },
+      "int": {
+        "args": {
+          "value": "BigInt"
+        },
+        "return": "Program"
+      },
+      "bound_checked_number": {
+        "args": {
+          "value": "f64"
+        },
+        "return": "Program"
+      },
+      "string": {
+        "args": {
+          "value": "String"
+        },
+        "return": "Program"
+      },
+      "bool": {
+        "args": {
+          "value": "bool"
+        },
+        "return": "Program"
+      },
+      "atom": {
+        "args": {
+          "value": "Bytes"
+        },
+        "return": "Program"
+      },
+      "list": {
+        "args": {
+          "value": "Vec<Program>"
+        },
+        "return": "Program"
+      },
+      "delegated_spend": {
+        "args": {
+          "conditions": "Vec<Program>"
+        },
+        "return": "Spend"
+      },
+      "standard_spend": {
+        "args": {
+          "synthetic_key": "PublicKey",
+          "spend": "Spend"
+        },
+        "return": "Spend"
+      },
+      "spend_standard_coin": {
+        "args": {
+          "coin": "Coin",
+          "synthetic_key": "PublicKey",
+          "spend": "Spend"
+        }
+      },
+      "spend_cats": {
+        "args": {
+          "cat_spends": "Vec<CatSpend>"
+        },
+        "return": "Vec<Cat>"
+      },
+      "mint_nfts": {
+        "args": {
+          "parent_coin_id": "Bytes32",
+          "nft_mints": "Vec<NftMint>"
+        },
+        "return": "MintedNfts"
+      },
+      "spend_nft": {
+        "args": {
+          "nft": "Nft",
+          "inner_spend": "Spend"
+        },
+        "return": "Nft"
+      },
+      "create_eve_did": {
+        "args": {
+          "parent_coin_id": "Bytes32",
+          "p2_puzzle_hash": "Bytes32"
+        },
+        "return": "CreatedDid"
+      },
+      "spend_did": {
+        "args": {
+          "did": "Did",
+          "inner_spend": "Spend"
+        },
+        "return": "Option<Did>"
+      },
+      "spend_streamed_cat": {
+        "args": {
+          "streamed_cat": "StreamedCat",
+          "payment_time": "u64",
+          "clawback": "bool"
+        }
+      },
+      "mint_vault": {
+        "args": {
+          "parent_coin_id": "Bytes32",
+          "custody_hash": "TreeHash",
+          "memos": "Program"
+        },
+        "return": "VaultMint"
+      },
+      "mips_spend": {
+        "args": {
+          "coin": "Coin",
+          "delegated_spend": "Spend"
+        },
+        "return": "MipsSpend"
+      },
+      "nft_metadata": {
+        "args": {
+          "value": "NftMetadata"
+        },
+        "return": "Program"
+      },
+      "mips_memo": {
+        "args": {
+          "value": "MipsMemo"
+        },
+        "return": "Program"
+      },
+      "inner_puzzle_memo": {
+        "args": {
+          "value": "InnerPuzzleMemo"
+        },
+        "return": "Program"
+      },
+      "restriction_memo": {
+        "args": {
+          "value": "RestrictionMemo"
+        },
+        "return": "Program"
+      },
+      "wrapper_memo": {
+        "args": {
+          "value": "WrapperMemo"
+        },
+        "return": "Program"
+      },
+      "force_1_of_2_restricted_variable_memo": {
+        "args": {
+          "value": "Force1of2RestrictedVariableMemo"
+        },
+        "return": "Program"
+      },
+      "memo_kind": {
+        "args": {
+          "value": "MemoKind"
+        },
+        "return": "Program"
+      },
+      "member_memo": {
+        "args": {
+          "value": "MemberMemo"
+        },
+        "return": "Program"
+      },
+      "m_of_n_memo": {
+        "args": {
+          "value": "MofNMemo"
+        },
+        "return": "Program"
+      },
+      "remark": {
+        "args": {
+          "rest": "Program"
+        },
+        "return": "Program"
+      },
+      "agg_sig_parent": {
+        "args": {
+          "public_key": "PublicKey",
+          "message": "Bytes"
+        },
+        "return": "Program"
+      },
+      "agg_sig_puzzle": {
+        "args": {
+          "public_key": "PublicKey",
+          "message": "Bytes"
+        },
+        "return": "Program"
+      },
+      "agg_sig_amount": {
+        "args": {
+          "public_key": "PublicKey",
+          "message": "Bytes"
+        },
+        "return": "Program"
+      },
+      "agg_sig_puzzle_amount": {
+        "args": {
+          "public_key": "PublicKey",
+          "message": "Bytes"
+        },
+        "return": "Program"
+      },
+      "agg_sig_parent_amount": {
+        "args": {
+          "public_key": "PublicKey",
+          "message": "Bytes"
+        },
+        "return": "Program"
+      },
+      "agg_sig_parent_puzzle": {
+        "args": {
+          "public_key": "PublicKey",
+          "message": "Bytes"
+        },
+        "return": "Program"
+      },
+      "agg_sig_unsafe": {
+        "args": {
+          "public_key": "PublicKey",
+          "message": "Bytes"
+        },
+        "return": "Program"
+      },
+      "agg_sig_me": {
+        "args": {
+          "public_key": "PublicKey",
+          "message": "Bytes"
+        },
+        "return": "Program"
+      },
+      "create_coin": {
+        "args": {
+          "puzzle_hash": "Bytes32",
+          "amount": "u64",
+          "memos": "Option<Program>"
+        },
+        "return": "Program"
+      },
+      "reserve_fee": {
+        "args": {
+          "amount": "u64"
+        },
+        "return": "Program"
+      },
+      "create_coin_announcement": {
+        "args": {
+          "message": "Bytes"
+        },
+        "return": "Program"
+      },
+      "create_puzzle_announcement": {
+        "args": {
+          "message": "Bytes"
+        },
+        "return": "Program"
+      },
+      "assert_coin_announcement": {
+        "args": {
+          "announcement_id": "Bytes32"
+        },
+        "return": "Program"
+      },
+      "assert_puzzle_announcement": {
+        "args": {
+          "announcement_id": "Bytes32"
+        },
+        "return": "Program"
+      },
+      "assert_concurrent_spend": {
+        "args": {
+          "coin_id": "Bytes32"
+        },
+        "return": "Program"
+      },
+      "assert_concurrent_puzzle": {
+        "args": {
+          "puzzle_hash": "Bytes32"
+        },
+        "return": "Program"
+      },
+      "assert_seconds_relative": {
+        "args": {
+          "seconds": "u64"
+        },
+        "return": "Program"
+      },
+      "assert_seconds_absolute": {
+        "args": {
+          "seconds": "u64"
+        },
+        "return": "Program"
+      },
+      "assert_height_relative": {
+        "args": {
+          "height": "u32"
+        },
+        "return": "Program"
+      },
+      "assert_height_absolute": {
+        "args": {
+          "height": "u32"
+        },
+        "return": "Program"
+      },
+      "assert_before_seconds_relative": {
+        "args": {
+          "seconds": "u64"
+        },
+        "return": "Program"
+      },
+      "assert_before_seconds_absolute": {
+        "args": {
+          "seconds": "u64"
+        },
+        "return": "Program"
+      },
+      "assert_before_height_relative": {
+        "args": {
+          "height": "u32"
+        },
+        "return": "Program"
+      },
+      "assert_before_height_absolute": {
+        "args": {
+          "height": "u32"
+        },
+        "return": "Program"
+      },
+      "assert_my_coin_id": {
+        "args": {
+          "coin_id": "Bytes32"
+        },
+        "return": "Program"
+      },
+      "assert_my_parent_id": {
+        "args": {
+          "parent_id": "Bytes32"
+        },
+        "return": "Program"
+      },
+      "assert_my_puzzle_hash": {
+        "args": {
+          "puzzle_hash": "Bytes32"
+        },
+        "return": "Program"
+      },
+      "assert_my_amount": {
+        "args": {
+          "amount": "u64"
+        },
+        "return": "Program"
+      },
+      "assert_my_birth_seconds": {
+        "args": {
+          "seconds": "u64"
+        },
+        "return": "Program"
+      },
+      "assert_my_birth_height": {
+        "args": {
+          "height": "u32"
+        },
+        "return": "Program"
+      },
+      "assert_ephemeral": {
+        "return": "Program"
+      },
+      "send_message": {
+        "args": {
+          "mode": "u8",
+          "message": "Bytes",
+          "data": "Vec<Program>"
+        },
+        "return": "Program"
+      },
+      "receive_message": {
+        "args": {
+          "mode": "u8",
+          "message": "Bytes",
+          "data": "Vec<Program>"
+        },
+        "return": "Program"
+      },
+      "softfork": {
+        "args": {
+          "cost": "u64",
+          "rest": "Program"
+        },
+        "return": "Program"
+      },
+      "melt_singleton": {
+        "return": "Program"
+      },
+      "transfer_nft": {
+        "args": {
+          "launcher_id": "Option<Bytes32>",
+          "trade_prices": "Vec<TradePrice>",
+          "singleton_inner_puzzle_hash": "Option<Bytes32>"
+        },
+        "return": "Program"
+      },
+      "run_cat_tail": {
+        "args": {
+          "program": "Program",
+          "solution": "Program"
+        },
+        "return": "Program"
+      },
+      "update_nft_metadata": {
+        "args": {
+          "updater_puzzle_reveal": "Program",
+          "updater_solution": "Program"
+        },
+        "return": "Program"
+      },
+      "update_data_store_merkle_root": {
+        "args": {
+          "new_merkle_root": "Bytes32",
+          "memos": "Vec<Bytes>"
+        },
+        "return": "Program"
+      }
+    }
+  }
+}
